@@ -12,8 +12,8 @@
 | File | Description |
 |------|-------------|
 | `vlan-test.sh` | Main test script — runs locally on the Ubuntu probe VM |
-| `Get-PortGroupData.ps1` | PowerCLI script — pulls port groups and NSX segments, writes `portgroups.json` |
-| `vlan-config-builder.html` | Browser-based tool — builds the `VLANS=()` config block, supports JSON import |
+| `Get-PortGroupData.ps1` | PowerCLI script — pulls port groups and NSX segments, writes `portgroups.json`. Prompts for credentials on first run and saves them encrypted. |
+| `vlan-config-builder.html` | Browser-based tool — builds the `VLANS=()` config block. Supports manual entry and JSON import from `portgroups.json`. |
 | `vlan-test-guide.docx` | Full user and configuration guide |
 | `blogpost.md` | Technical blog post explaining the architecture and test battery |
 
@@ -64,7 +64,7 @@ echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/probe
 
 Option A — open `vlan-config-builder.html` in a browser and fill in manually.
 
-Option B — run `Get-PortGroupData.ps1` on a Windows machine with PowerCLI to pull port groups and NSX segments automatically, then load the resulting `portgroups.json` into the config builder.
+Option B — run `Get-PortGroupData.ps1` on a Windows machine with PowerCLI. It will prompt for vCenter and NSX credentials on first run and save them encrypted for subsequent runs. Load the resulting `portgroups.json` into the config builder using the "Load from vCenter / NSX" button. To reset saved credentials run `Get-PortGroupData.ps1 -Reset`.
 
 ### 3. Configure the script
 
@@ -135,6 +135,8 @@ Reports are written to `./vlan-reports/`.
 | Version | Date | Changes |
 |---------|------|---------|
 | v1.0 | 2026-03-13 | Initial release — vSphere VDS/VSS and NSX segment export |
+| v1.1 | 2026-03-13 | Interactive credential prompts with encrypted save/load via DPAPI |
+| v1.2 | 2026-03-13 | Fixed null VDSwitch/Notes properties, added -Standard flag to Get-VirtualPortGroup |
 
 ### vlan-config-builder.html
 | Version | Date | Changes |
@@ -142,6 +144,7 @@ Reports are written to `./vlan-reports/`.
 | v1.0 | 2026-03-13 | Initial release |
 | v1.1 | 2026-03-13 | Dark mode and larger layout |
 | v1.2 | 2026-03-13 | vCenter/NSX JSON import with source badges and selection modal |
+| v1.3 | 2026-03-13 | Fixed gateway stripping subnet prefix, IP derived from subnet, description falls back to port group name, source column spacing |
 
 ---
 
