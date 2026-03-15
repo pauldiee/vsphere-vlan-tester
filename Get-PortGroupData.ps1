@@ -19,8 +19,11 @@
 #    - VMware.PowerCLI module
 #
 #  Usage:
-#    .\Get-PortGroupData.ps1           # normal run
-#    .\Get-PortGroupData.ps1 -Reset    # clear saved credentials
+#    .\Get-PortGroupData.ps1                      # prompts for source
+#    .\Get-PortGroupData.ps1 -Source vCenter     # vCenter only
+#    .\Get-PortGroupData.ps1 -Source NSX         # NSX only
+#    .\Get-PortGroupData.ps1 -Source Both        # both (no prompt)
+#    .\Get-PortGroupData.ps1 -Reset              # clear saved credentials
 #
 #  Changelog:
 #    v1.0  2026-03-13  Initial release
@@ -28,10 +31,14 @@
 #                      encrypted save/load via DPAPI
 #    v1.2  2026-03-13  Fixed null VDSwitch/Notes properties, added
 #                      -Standard flag to Get-VirtualPortGroup
+#    v1.3  2026-03-13  Added source selection prompt (vCenter/NSX/Both)
+#                      and -Source parameter for unattended use
 # ============================================================
 
 param(
-    [switch]$Reset
+    [switch]$Reset,
+    [ValidateSet("Both","vCenter","NSX")]
+    [string]$Source = ""
 )
 
 $CredFile   = Join-Path $PSScriptRoot "credentials.xml"
@@ -109,7 +116,7 @@ if ($Reset -and (Test-Path $CredFile)) {
 
 Write-Host ""
 Write-Host "  +==========================================+" -ForegroundColor DarkCyan
-Write-Host "  |       Get-PortGroupData  v1.1            |" -ForegroundColor DarkCyan
+Write-Host "  |       Get-PortGroupData  v1.3            |" -ForegroundColor DarkCyan
 Write-Host "  |       hollebollevsan.nl                  |" -ForegroundColor DarkCyan
 Write-Host "  +==========================================+" -ForegroundColor DarkCyan
 Write-Host ""
@@ -135,12 +142,33 @@ $NSXPass     = if ($NSXCred) { $NSXCred.GetNetworkCredential().Password } else {
 $NSXUser     = if ($NSXCred) { $NSXCred.UserName } else { "" }
 
 # ============================================================
+#  Source selection
+# ============================================================
+if (-not $Source) {
+    Write-Host ""
+    Write-Host "  What would you like to fetch?" -ForegroundColor Cyan
+    Write-Host "  [1] Both vCenter and NSX" -ForegroundColor White
+    Write-Host "  [2] vCenter only" -ForegroundColor White
+    Write-Host "  [3] NSX only" -ForegroundColor White
+    Write-Host ""
+    $choice = Read-Host "  Enter choice (1/2/3)"
+    switch ($choice) {
+        "2" { $Source = "vCenter" }
+        "3" { $Source = "NSX" }
+        default { $Source = "Both" }
+    }
+}
+Write-Host "[Source] Fetching: $Source" -ForegroundColor Cyan
+Write-Host ""
+
+# ============================================================
 #  vSphere - Standard and Distributed Port Groups
 # ============================================================
 Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false | Out-Null
 
 $results = [System.Collections.Generic.List[PSCustomObject]]::new()
 
+if ($Source -eq "Both" -or $Source -eq "vCenter") {
 Write-Host "[vSphere] Connecting to $vCenterServer..." -ForegroundColor Cyan
 
 try {
@@ -191,11 +219,12 @@ try {
 } catch {
     Write-Warning "[vSphere] Failed: $_"
 }
+} # end if vCenter
 
 # ============================================================
 #  NSX - Segments
 # ============================================================
-if ($NSXCred -and $NSXManager) {
+if (($Source -eq "Both" -or $Source -eq "NSX") -and $NSXCred -and $NSXManager) {
     Write-Host "[NSX] Connecting to $NSXManager..." -ForegroundColor Cyan
 
     try {

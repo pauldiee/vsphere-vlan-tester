@@ -137,6 +137,7 @@ Reports are written to `./vlan-reports/`.
 | v1.0 | 2026-03-13 | Initial release — vSphere VDS/VSS and NSX segment export |
 | v1.1 | 2026-03-13 | Interactive credential prompts with encrypted save/load via DPAPI |
 | v1.2 | 2026-03-13 | Fixed null VDSwitch/Notes properties, added -Standard flag to Get-VirtualPortGroup |
+| v1.3 | 2026-03-13 | Added source selection prompt (vCenter/NSX/Both) and -Source parameter |
 
 ### vlan-config-builder.html
 | Version | Date | Changes |
@@ -145,6 +146,7 @@ Reports are written to `./vlan-reports/`.
 | v1.1 | 2026-03-13 | Dark mode and larger layout |
 | v1.2 | 2026-03-13 | vCenter/NSX JSON import with source badges and selection modal |
 | v1.3 | 2026-03-13 | Fixed gateway stripping subnet prefix, IP derived from subnet, description falls back to port group name, source column spacing |
+| v1.4 | 2026-03-13 | Updated source column width and badge padding |
 
 ---
 
