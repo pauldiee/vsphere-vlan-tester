@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  vlan-config-builder.html
+
+  Description:
+    Interactive web tool to build the VLANS=() config block
+    for vlan-test.sh. Supports manual entry and importing
+    port group / segment data from portgroups.json generated
+    by Get-PortGroupData.ps1.
+
+  Author : Paul van Dieen
+  Site   : https://www.hollebollevsan.nl
+
+  Usage:
+    Open in any modern browser. Use "Load from vCenter / NSX"
+    to import portgroups.json, fill in IP addresses, then
+    copy the generated config block into vlan-test.sh.
+
+  Changelog:
+    v1.0  2026-03-13  Initial release
+    v1.1  2026-03-13  Added dark mode and larger layout
+    v1.2  2026-03-13  Added vCenter/NSX JSON import with
+                      source badges and selection modal
+  ============================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VLAN Config Builder — hollebollevsan.nl</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; min-height: 100vh; padding: 28px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #c9d1d9; }
+.app-header { margin-bottom: 24px; }
+.app-title { font-size: 18px; font-weight: 500; color: #e6edf3; }
+.app-sub { font-size: 13px; color: #8b949e; margin-top: 4px; }
+.app-sub a { color: #58a6ff; text-decoration: none; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.toolbar-sep { width: 1px; height: 28px; background: #30363d; margin: 0 2px; }
+.btn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #c9d1d9; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.btn:hover { background: #21262d; border-color: #8b949e; }
+.btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
+.btn-primary:hover { background: #2ea043; }
+.btn-import { border-color: #58a6ff40; color: #58a6ff; }
+.btn-import:hover { background: #58a6ff14; border-color: #58a6ff; }
+.btn-danger { color: #f85149; border-color: #f8514940; }
+.btn-danger:hover { background: #f8514914; }
+.table-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+.col-headers { display: grid; grid-template-columns: 80px 1.8fr 1.2fr 70px 1.2fr 1.5fr 80px 48px; gap: 0; padding: 10px 16px; border-bottom: 1px solid #30363d; background: #0d1117; }
+.col-headers span { font-size: 12px; font-weight: 500; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; }
+.vrow { display: grid; grid-template-columns: 80px 1.8fr 1.2fr 70px 1.2fr 1.5fr 80px 48px; gap: 8px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #21262d; transition: background 0.1s; }
+.vrow:last-child { border-bottom: none; }
+.vrow:hover { background: #21262d30; }
+.source-badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; text-align: center; white-space: nowrap; }
+.badge-vsphere { background: #1f4068; color: #79c0ff; border: 1px solid #58a6ff30; }
+.badge-nsx     { background: #2d1f68; color: #c9a7ff; border: 1px solid #a371f730; }
+.badge-manual  { background: #1f3820; color: #7ee787; border: 1px solid #3fb95030; }
+.empty-state { padding: 48px 20px; text-align: center; color: #8b949e; font-size: 14px; }
+input { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; width: 100%; transition: border-color 0.15s; }
+input::placeholder { color: #484f58; }
+input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px #58a6ff18; }
+input.err { border-color: #f85149; box-shadow: 0 0 0 3px #f8514918; }
+input.ok  { border-color: #3fb950; }
+.del-btn { width: 34px; height: 34px; border-radius: 6px; border: 1px solid #30363d; background: transparent; color: #8b949e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; padding: 0; transition: all 0.1s; }
+.del-btn:hover { background: #f8514914; color: #f85149; border-color: #f8514940; }
+.footer-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid #21262d; background: #0d1117; }
+.vlan-count { font-size: 13px; color: #8b949e; }
+.toast { font-size: 12px; padding: 4px 12px; border-radius: 6px; border: 1px solid #30363d; }
+.toast-ok  { color: #3fb950; border-color: #3fb95040; }
+.toast-err { color: #f85149; border-color: #f8514940; }
+.output-section { margin-top: 24px; }
+.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.output-label { font-size: 13px; color: #8b949e; display: flex; align-items: center; gap: 8px; }
+.output-label::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; }
+.copy-btn { font-size: 12px; padding: 6px 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #8b949e; cursor: pointer; }
+.copy-btn:hover { background: #21262d; color: #e6edf3; }
+pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; color: #e6edf3; white-space: pre; overflow-x: auto; line-height: 1.8; }
+.kw { color: #ff7b72; }
+.st { color: #a5d6ff; }
+.modal-backdrop { position: fixed; inset: 0; background: #00000099; display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; width: 480px; max-width: 90vw; }
+.modal h3 { font-size: 15px; font-weight: 500; color: #e6edf3; margin-bottom: 8px; }
+.modal p  { font-size: 13px; color: #8b949e; margin-bottom: 16px; line-height: 1.6; }
+.modal-list { max-height: 320px; overflow-y: auto; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 16px; }
+.modal-item { display: grid; grid-template-columns: 24px 1fr 80px 80px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #21262d; cursor: pointer; transition: background 0.1s; }
+.modal-item:last-child { border-bottom: none; }
+.modal-item:hover { background: #21262d; }
+.modal-item.selected { background: #1f6feb20; }
+.modal-item input[type=checkbox] { accent-color: #58a6ff; width: 14px; height: 14px; cursor: pointer; }
+.modal-name { font-size: 13px; color: #e6edf3; font-family: 'SFMono-Regular', Consolas, monospace; }
+.modal-vlan { font-size: 12px; color: #8b949e; }
+.modal-source { font-size: 10px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-footer .btn { padding: 7px 16px; font-size: 13px; }
+.sel-all { font-size: 12px; color: #58a6ff; cursor: pointer; margin-bottom: 8px; display: inline-block; }
+.sel-all:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="app-header">
+  <div class="app-title">VLAN Config Builder</div>
+  <div class="app-sub">Generate the VLANS=() block for vlan-test.sh &nbsp;·&nbsp; <a href="https://www.hollebollevsan.nl" target="_blank">www.hollebollevsan.nl</a></div>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-import" onclick="triggerImport()">⬇ Load from vCenter / NSX</button>
+  <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJSON(this)">
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-primary" onclick="addRow()">+ Add VLAN</button>
+  <button class="btn" onclick="generate()">Generate config ↗</button>
+  <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
+  <span id="toast" style="display:none"></span>
+</div>
+
+<div class="table-wrap">
+  <div class="col-headers">
+    <span>Source</span>
+    <span>Port group name</span>
+    <span>IP address</span>
+    <span>Prefix</span>
+    <span>Gateway</span>
+    <span>Description</span>
+    <span>Source / VLAN ID</span>
+    <span></span>
+  </div>
+  <div id="rows"></div>
+  <div class="footer-bar">
+    <span class="vlan-count" id="count">0 VLANs</span>
+  </div>
+</div>
+
+<div class="output-section" id="output-section" style="display:none">
+  <div class="output-header">
+    <div class="output-label">Config block ready — paste into vlan-test.sh</div>
+    <button class="copy-btn" id="copy-btn" onclick="copyConfig()">Copy to clipboard</button>
+  </div>
+  <pre id="output"></pre>
+</div>
+
+<div class="modal-backdrop" id="modal" style="display:none">
+  <div class="modal">
+    <h3>Select port groups to import</h3>
+    <p>Loaded from <span id="modal-source-label">portgroups.json</span>. Select the ones you want to test — IP addresses can be filled in after import.</p>
+    <span class="sel-all" onclick="toggleAll()">Select all</span>
+    <div class="modal-list" id="modal-list"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="importSelected()">Import selected</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let rows = [], uid = 0, importData = [];
+
+const defaults = [
+  { pg:'PG-VLAN10', ip:'192.168.10.100', prefix:'24', gw:'192.168.10.1', desc:'Server VLAN', source:'manual', vlanId:'' },
+  { pg:'PG-VLAN20', ip:'192.168.20.100', prefix:'24', gw:'192.168.20.1', desc:'User VLAN',   source:'manual', vlanId:'' },
+];
+
+function addRow(data) {
+  rows.push({ id:uid++, pg:'', ip:'', prefix:'24', gw:'', desc:'', source:'manual', vlanId:'', ...(data||{}) });
+  render();
+}
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  render();
+  if (document.getElementById('output-section').style.display !== 'none') generate();
+}
+function getVal(id, field) { const el = document.getElementById(`${field}-${id}`); return el ? el.value.trim() : ''; }
+function isValidIP(ip) { return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip) && ip.split('.').every(n => +n >= 0 && +n <= 255); }
+function isValidPrefix(p) { const n = parseInt(p); return !isNaN(n) && n >= 1 && n <= 32; }
+function validateInput(el, fn) { const v = el.value.trim(); if (!v) { el.classList.remove('ok','err'); return; } el.classList.toggle('err',!fn(v)); el.classList.toggle('ok',fn(v)); }
+function esc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function sourceBadge(source, vlanId) {
+  const cls = source === 'NSX' ? 'badge-nsx' : source === 'manual' ? 'badge-manual' : 'badge-vsphere';
+  return `<span class="source-badge ${cls}">${esc(source)}</span>`;
+}
+function sync(id, field, value) { const r = rows.find(r => r.id === id); if (r) r[field] = value; }
+
+function render() {
+  const c = document.getElementById('rows');
+  if (!rows.length) { c.innerHTML = '<div class="empty-state">No VLANs yet — click "+ Add VLAN" or load from vCenter / NSX</div>'; document.getElementById('count').textContent = '0 VLANs'; return; }
+  c.innerHTML = '';
+  rows.forEach(r => {
+    const d = document.createElement('div'); d.className = 'vrow';
+    d.innerHTML = `
+      <div>${sourceBadge(r.source||'manual', r.vlanId||'')}</div>
+      <input id="pg-${r.id}"     value="${esc(r.pg)}"     placeholder="PG-VLAN10"      oninput="sync(${r.id},'pg',this.value)">
+      <input id="ip-${r.id}"     value="${esc(r.ip)}"     placeholder="192.168.10.100" oninput="sync(${r.id},'ip',this.value);validateInput(this,isValidIP)">
+      <input id="prefix-${r.id}" value="${esc(r.prefix)}" placeholder="24"             oninput="sync(${r.id},'prefix',this.value);validateInput(this,isValidPrefix)" style="text-align:center">
+      <input id="gw-${r.id}"     value="${esc(r.gw)}"     placeholder="192.168.10.1"   oninput="sync(${r.id},'gw',this.value);validateInput(this,isValidIP)">
+      <input id="desc-${r.id}"   value="${esc(r.desc)}"   placeholder="Description"    oninput="sync(${r.id},'desc',this.value)">
+      <div style="font-size:11px;color:#8b949e;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.vlanId||'')}</div>
+      <button class="del-btn" onclick="removeRow(${r.id})">×</button>`;
+    c.appendChild(d);
+  });
+  document.getElementById('count').textContent = `${rows.length} VLAN${rows.length !== 1 ? 's' : ''}`;
+  if (document.getElementById('output-section').style.display !== 'none') generate();
+}
+
+function triggerImport() { document.getElementById('json-file').click(); }
+function loadJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const arr  = Array.isArray(data) ? data : [data];
+      if (!arr.length) { showToast('No entries found in JSON', false); return; }
+      importData = arr; openModal(file.name);
+    } catch { showToast('Invalid JSON file', false); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function openModal(filename) {
+  document.getElementById('modal-source-label').textContent = filename;
+  const list = document.getElementById('modal-list'); list.innerHTML = '';
+  importData.forEach((item, i) => {
+    const div = document.createElement('div'); div.className = 'modal-item'; div.dataset.idx = i;
+    div.onclick = () => { const cb = div.querySelector('input'); cb.checked = !cb.checked; div.classList.toggle('selected', cb.checked); };
+    const src  = item.source || 'vSphere'; const vlan = item.vlanId || item.vlan_id || '';
+    const stype = src === 'NSX' ? 'badge-nsx' : 'badge-vsphere';
+    div.innerHTML = `<input type="checkbox" onclick="event.stopPropagation();this.closest('.modal-item').classList.toggle('selected',this.checked)"><span class="modal-name">${esc(item.name||item.display_name||'')}</span><span class="modal-vlan">${vlan ? 'VLAN '+vlan : ''}</span><span class="source-badge ${stype} modal-source">${esc(src)}</span>`;
+    list.appendChild(div);
+  });
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function toggleAll() { const items = document.querySelectorAll('.modal-item'); const allChecked = [...items].every(i => i.querySelector('input').checked); items.forEach(i => { i.querySelector('input').checked = !allChecked; i.classList.toggle('selected', !allChecked); }); }
+function importSelected() {
+  const items = document.querySelectorAll('.modal-item');
+  const selected = [...items].filter(i => i.querySelector('input').checked);
+  if (!selected.length) { showToast('No items selected', false); return; }
+  selected.forEach(item => {
+    const d = importData[+item.dataset.idx];
+    let ip = '', prefix = '24', gw = '';
+    if (d.subnet) {
+      const parts = d.subnet.split('/');
+      prefix = parts[1] || '24';
+      // derive a probe IP by replacing last octet with .100
+      const base = parts[0].split('.');
+      base[3] = '100';
+      ip = base.join('.');
+    }
+    // gateway may come as "192.168.1.1/24" or "192.168.1.1" — strip prefix if present
+    const rawGw = d.gateway || d.gateway_address || '';
+    gw = rawGw.includes('/') ? rawGw.split('/')[0] : rawGw;
+    const pgName = d.name || d.display_name || '';
+    const desc = (d.description && d.description.trim()) ? d.description.trim() : pgName;
+    addRow({ pg: d.name||d.display_name||'', ip, prefix, gw, desc, source: d.source||'vSphere', vlanId: String(d.vlanId||d.vlan_id||'') });
+  });
+  closeModal();
+  showToast(`Imported ${selected.length} port group${selected.length !== 1 ? 's' : ''}`, true);
+}
+
+function showToast(msg, ok) {
+  const t = document.getElementById('toast'); t.textContent = msg;
+  t.className = ok ? 'toast toast-ok' : 'toast toast-err'; t.style.display = 'inline-block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function generate() {
+  if (!rows.length) { document.getElementById('output-section').style.display = 'none'; return; }
+  const lines = rows.map(r => { const pg=getVal(r.id,'pg')||r.pg||'PG-NAME', ip=getVal(r.id,'ip')||r.ip||'0.0.0.0', pref=getVal(r.id,'prefix')||r.prefix||'24', gw=getVal(r.id,'gw')||r.gw||'0.0.0.1', desc=getVal(r.id,'desc')||r.desc||'VLAN'; return `  <span class="st">"${pg}|${ip}/${pref}|${gw}|${desc}"</span>`; });
+  document.getElementById('output').innerHTML = `<span class="kw">VLANS</span>=(\n${lines.join('\n')}\n)`;
+  document.getElementById('output-section').style.display = 'block';
+}
+
+function copyConfig() {
+  const lines = rows.map(r => { const pg=getVal(r.id,'pg')||r.pg||'PG-NAME', ip=getVal(r.id,'ip')||r.ip||'0.0.0.0', pref=getVal(r.id,'prefix')||r.prefix||'24', gw=getVal(r.id,'gw')||r.gw||'0.0.0.1', desc=getVal(r.id,'desc')||r.desc||'VLAN'; return `  "${pg}|${ip}/${pref}|${gw}|${desc}"`; });
+  navigator.clipboard.writeText(`VLANS=(\n${lines.join('\n')}\n)`).then(() => { const btn = document.getElementById('copy-btn'); btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = 'Copy to clipboard', 2000); });
+}
+
+function clearAll() { rows = []; document.getElementById('output-section').style.display = 'none'; render(); }
+
+defaults.forEach(d => addRow(d));
+</script>
+</body>
+</html>
