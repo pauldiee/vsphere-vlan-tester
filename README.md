@@ -15,7 +15,6 @@
 | `Get-PortGroupData.ps1` | PowerCLI script — pulls port groups and NSX segments, writes `portgroups.json`. Prompts for credentials on first run and saves them encrypted. |
 | `vlan-config-builder.html` | Browser-based tool — builds the `VLANS=()` config block. Supports manual entry and JSON import from `portgroups.json`. |
 | `vlan-test-guide.docx` | Full user and configuration guide |
-| `blogpost.md` | Technical blog post explaining the architecture and test battery |
 
 ---
 
