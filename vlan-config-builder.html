@@ -107,8 +107,10 @@ pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; paddi
 </div>
 
 <div class="toolbar">
-  <button class="btn btn-import" onclick="triggerImport()">⬇ Load from vCenter / NSX</button>
+  <button class="btn btn-import" onclick="triggerImport()">&#8595; Load from vCenter / NSX</button>
   <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJSON(this)">
+  <button class="btn btn-import" onclick="document.getElementById('txt-file').click()">&#8595; Import saved config</button>
+  <input type="file" id="txt-file" accept=".txt" style="display:none" onchange="loadTxt(this)">
   <div class="toolbar-sep"></div>
   <button class="btn btn-primary" onclick="addRow()">+ Add VLAN</button>
   <button class="btn" onclick="generate()">Generate config ↗</button>
@@ -137,6 +139,7 @@ pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; paddi
   <div class="output-header">
     <div class="output-label">Config block ready — paste into vlan-test.sh</div>
     <button class="copy-btn" id="copy-btn" onclick="copyConfig()">Copy to clipboard</button>
+      <button class="copy-btn" onclick="exportConfig()" style="margin-left:8px;">Export to file</button>
   </div>
   <pre id="output"></pre>
 </div>
@@ -219,6 +222,20 @@ function loadJSON(input) {
   reader.readAsText(file);
 }
 
+function loadTxt(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const matches = [...text.matchAll(/"([^"]+)\|([^"]+)\/(\d+)\|([^"]+)\|([^"]*)"/g)];
+    if (!matches.length) { showToast('No valid VLANS entries found', false); input.value = ''; return; }
+    matches.forEach(m => addRow({ pg: m[1], ip: m[2]+'/'+m[3], prefix: m[3], gw: m[4], desc: m[5], source: 'manual', vlanId: '' }));
+    showToast(`Imported ${matches.length} entr${matches.length !== 1 ? 'ies' : 'y'} from file`, true);
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
 function openModal(filename) {
   document.getElementById('modal-source-label').textContent = filename;
   const list = document.getElementById('modal-list'); list.innerHTML = '';
@@ -276,6 +293,17 @@ function generate() {
 function copyConfig() {
   const lines = rows.map(r => { const pg=getVal(r.id,'pg')||r.pg||'PG-NAME', ip=getVal(r.id,'ip')||r.ip||'0.0.0.0', pref=getVal(r.id,'prefix')||r.prefix||'24', gw=getVal(r.id,'gw')||r.gw||'0.0.0.1', desc=getVal(r.id,'desc')||r.desc||'VLAN'; return `  "${pg}|${ip}/${pref}|${gw}|${desc}"`; });
   navigator.clipboard.writeText(`VLANS=(\n${lines.join('\n')}\n)`).then(() => { const btn = document.getElementById('copy-btn'); btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = 'Copy to clipboard', 2000); });
+}
+
+function exportConfig() {
+  const lines = rows.map(r => { const pg=getVal(r.id,'pg')||r.pg||'PG-NAME', ip=getVal(r.id,'ip')||r.ip||'0.0.0.0', pref=getVal(r.id,'prefix')||r.prefix||'24', gw=getVal(r.id,'gw')||r.gw||'0.0.0.1', desc=getVal(r.id,'desc')||r.desc||'VLAN'; return `  "${pg}|${ip}/${pref}|${gw}|${desc}"`; });
+  const text = `VLANS=(\n${lines.join('\n')}\n)`;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'vlans-config.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function clearAll() { rows = []; document.getElementById('output-section').style.display = 'none'; render(); }
