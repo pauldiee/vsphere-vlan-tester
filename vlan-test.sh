@@ -39,6 +39,10 @@
 #                      UDP test (DNS/UDP 53) and latency baseline
 #    v1.10 2026-03-13  Bound all tests to test NIC using -I, --interface,
 #                      -b (SRC_IP), -s (SRC_IP) and -e flags
+#    v1.11 2026-03-16  Added PARTIAL status when >50% of tests pass
+#    v1.12 2026-03-16  Cleanup: removed duplicate LATENCY_WARN_MS in loop,
+#                      removed unused pg_safe variable, added PARTIAL
+#                      count to terminal summary
 # ============================================================
 
 # --- vCenter Config ---
@@ -69,6 +73,9 @@ VLANS=(
   "PG-VLAN20|192.168.20.100/24|192.168.20.1|User VLAN"
   "PG-VLAN30|192.168.30.100/24|192.168.30.1|DMZ VLAN"
 )
+
+# --- Latency warning threshold (ms) ---
+LATENCY_WARN_MS=50
 
 # --- Extra hosts to ping per VLAN (beyond gateway, optional) ---
 # Format: "PG-Name|host1 host2 host3"
@@ -314,7 +321,6 @@ for i in "${!VLANS[@]}"; do
   fi
 
   # 11. Latency baseline — 10 pings, record min/avg/max, warn if avg > threshold
-  LATENCY_WARN_MS=50   # adjust to suit your environment
   log "Latency baseline (10 pings to $GW)..."
   LAT_OUT=$(ping -c 10 -W 2 -i 0.2 -I "$IFACE" "$GW" 2>&1)
   LAT_STATS=$(echo "$LAT_OUT" | grep -oP 'rtt.*= \K[\d.]+/[\d.]+/[\d.]+')
@@ -355,6 +361,15 @@ log "Generating HTML report..."
 PASS_COUNT=$(grep -o '"status": "PASS"' "$JSON_FILE" | wc -l)
 FAIL_COUNT=$(grep -o '"status": "FAIL"' "$JSON_FILE" | wc -l)
 WARN_COUNT=$(grep -o '"status": "WARN"' "$JSON_FILE" | wc -l)
+PARTIAL_COUNT=$(python3 -c "
+import json
+results=json.load(open('$JSON_FILE'))
+groups={}
+for r in results:
+    g=r['portgroup']
+    groups.setdefault(g,[]).append(r)
+print(sum(1 for t in groups.values() if any(r['status']=='FAIL' for r in t) and sum(1 for r in t if r['status']=='PASS')>len(t)/2))
+")
 
 python3 << PYEOF
 import json, datetime
@@ -363,10 +378,10 @@ with open("$JSON_FILE") as f:
     results = json.load(f)
 
 ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-pass_c = sum(1 for r in results if r['status'] == 'PASS')
-fail_c = sum(1 for r in results if r['status'] == 'FAIL')
-warn_c = sum(1 for r in results if r['status'] == 'WARN')
-total  = len(results)
+pass_c   = sum(1 for r in results if r['status'] == 'PASS')
+fail_c   = sum(1 for r in results if r['status'] == 'FAIL')
+warn_c   = sum(1 for r in results if r['status'] == 'WARN')
+total    = len(results)
 
 groups = {}
 for r in results:
@@ -375,13 +390,22 @@ for r in results:
         groups[pg] = {'desc': r['description'], 'tests': []}
     groups[pg]['tests'].append(r)
 
+partial_c = sum(1 for data in groups.values()
+    if sum(1 for t in data['tests'] if t['status'] == 'FAIL') > 0
+    and sum(1 for t in data['tests'] if t['status'] == 'PASS') > len(data['tests']) / 2)
+
 rows = ""
 for pg, data in groups.items():
     pg_pass = sum(1 for t in data['tests'] if t['status'] == 'PASS')
     pg_fail = sum(1 for t in data['tests'] if t['status'] == 'FAIL')
     pg_warn = sum(1 for t in data['tests'] if t['status'] == 'WARN')
-    pg_status = 'FAIL' if pg_fail > 0 else ('WARN' if pg_warn > 0 else 'PASS')
-    pg_safe = pg.replace("'", "\\'")
+    pg_total  = pg_pass + pg_fail + pg_warn
+    if pg_fail == 0:
+        pg_status = 'WARN' if pg_warn > 0 else 'PASS'
+    elif pg_pass > pg_total / 2:
+        pg_status = 'PARTIAL'
+    else:
+        pg_status = 'FAIL'
     rows += f'''
     <tr class="pg-header" data-pg="{pg}" onclick="toggleGroup(this)">
       <td class="pg-name">▶ {pg}</td>
@@ -413,11 +437,11 @@ html = f"""<!DOCTYPE html>
   header {{ border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }}
   header h1 {{ font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600; color: #fff; letter-spacing: -0.5px; }}
   header .meta {{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); text-align: right; line-height: 1.8; }}
-  .summary {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }}
+  .summary {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }}
   .stat-card {{ background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; }}
   .stat-card .label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; font-family: 'IBM Plex Mono', monospace; }}
   .stat-card .value {{ font-size: 32px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }}
-  .stat-card.s-pass .value {{ color: var(--pass); }} .stat-card.s-fail .value {{ color: var(--fail); }} .stat-card.s-warn .value {{ color: var(--warn); }} .stat-card.s-total .value {{ color: var(--accent); }}
+  .stat-card.s-pass .value {{ color: var(--pass); }} .stat-card.s-fail .value {{ color: var(--fail); }} .stat-card.s-warn .value {{ color: var(--warn); }} .stat-card.s-total .value {{ color: var(--accent); }} .stat-card.s-partial .value {{ color: var(--accent); }}
   table {{ width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }}
   table tbody {{ border-radius: 8px; }}
   thead th {{ background: #1c2128; font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }}
@@ -431,6 +455,7 @@ html = f"""<!DOCTYPE html>
   .pill-pass {{ background: rgba(63,185,80,0.15); color: var(--pass); border: 1px solid rgba(63,185,80,0.3); }}
   .pill-fail {{ background: rgba(248,81,73,0.15); color: var(--fail); border: 1px solid rgba(248,81,73,0.3); }}
   .pill-warn {{ background: rgba(210,153,34,0.15); color: var(--warn); border: 1px solid rgba(210,153,34,0.3); }}
+  .pill-partial {{ background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }}
   .badge {{ display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; margin-right: 4px; }}
   .badge-pass {{ background: rgba(63,185,80,0.1); color: var(--pass); }} .badge-fail {{ background: rgba(248,81,73,0.1); color: var(--fail); }} .badge-warn {{ background: rgba(210,153,34,0.1); color: var(--warn); }}
   footer {{ margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; text-align: center; }}
@@ -445,6 +470,7 @@ html = f"""<!DOCTYPE html>
   <div class="stat-card s-total"><div class="label">Total Checks</div><div class="value">{total}</div></div>
   <div class="stat-card s-pass"><div class="label">Passed</div><div class="value">{pass_c}</div></div>
   <div class="stat-card s-warn"><div class="label">Warnings</div><div class="value">{warn_c}</div></div>
+  <div class="stat-card s-partial"><div class="label">Partial</div><div class="value">{partial_c}</div></div>
   <div class="stat-card s-fail"><div class="label">Failed</div><div class="value">{fail_c}</div></div>
 </div>
 <table>
