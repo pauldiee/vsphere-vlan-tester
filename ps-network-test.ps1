@@ -3,7 +3,8 @@
 #
 #  Description:
 #    Lightweight network connectivity tester for Windows.
-#    Runs ping and DNS lookups against a list of targets and
+#    Runs ping, reverse DNS (PTR) and optional forward DNS
+#    lookups against a list of targets and
 #    produces console output plus an interactive HTML report.
 #
 #    Target list is read from wsl-targets-config.txt if found
@@ -24,6 +25,8 @@
 #
 #  Changelog:
 #    v1.0  2026-03-16  Initial release
+#    v1.1  2026-03-16  DNS now does PTR on target IP + forward lookup
+#                      if label looks like a hostname
 # ============================================================
 
 param(
@@ -32,8 +35,6 @@ param(
 
 # --- DNS settings ---
 $DNS_SERVER   = "8.8.8.8"
-$DNS_HOSTNAME = "google.com"
-
 # --- Latency warning threshold (ms) ---
 $LATENCY_WARN_MS = 50
 
@@ -116,7 +117,7 @@ Write-Host "  |     hollebollevsan.nl                    |" -ForegroundColor Cya
 Write-Host "  +==========================================+" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Targets : $($targets.Count)"
-Write-Host "  DNS     : $DNS_SERVER"
+Write-Host "  DNS server : $DNS_SERVER"
 Write-Host ""
 
 # ============================================================
@@ -157,21 +158,47 @@ foreach ($target in $targets) {
         Add-Result $label "Ping" "FAIL" "Host unreachable"
     }
 
-    # 2. DNS lookup
-    Write-Host "[$(Get-Date -Format HH:mm:ss)] DNS lookup ($DNS_HOSTNAME via $DNS_SERVER)..." -ForegroundColor DarkGray
+    # 2a. Reverse DNS (PTR) on the target IP
+    Write-Host "[$(Get-Date -Format HH:mm:ss)] Reverse DNS (PTR) for $ip via $DNS_SERVER..." -ForegroundColor DarkGray
     try {
-        $dnsResult = Resolve-DnsName -Name $DNS_HOSTNAME -Server $DNS_SERVER -Type A -ErrorAction Stop
-        $resolvedIPs = ($dnsResult | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress) -join ", "
-        if ($resolvedIPs) {
-            Write-Pass "Resolved $DNS_HOSTNAME -> $resolvedIPs"
-            Add-Result $label "DNS Lookup" "PASS" "$DNS_HOSTNAME -> $resolvedIPs"
+        $ptrResult = Resolve-DnsName -Name $ip -Server $DNS_SERVER -Type PTR -ErrorAction Stop
+        $ptrNames  = ($ptrResult | Where-Object { $_.Type -eq 'PTR' } | Select-Object -ExpandProperty NameHost) -join ", "
+        if ($ptrNames) {
+            Write-Pass "PTR $ip -> $ptrNames"
+            Add-Result $label "Reverse DNS (PTR)" "PASS" "$ip -> $ptrNames"
         } else {
-            Write-Fail "No A records returned"
-            Add-Result $label "DNS Lookup" "FAIL" "No A records for $DNS_HOSTNAME"
+            Write-Warn "No PTR record for $ip"
+            Add-Result $label "Reverse DNS (PTR)" "WARN" "No PTR record found for $ip"
         }
     } catch {
-        Write-Fail "DNS lookup failed: $_"
-        Add-Result $label "DNS Lookup" "FAIL" "DNS failed: $($_.Exception.Message)"
+        Write-Warn "No PTR record for $ip (no reverse DNS configured)"
+        Add-Result $label "Reverse DNS (PTR)" "WARN" "PTR lookup failed: $($_.Exception.Message)"
+    }
+
+    # 2b. Forward DNS — only if the label looks like a hostname (contains a dot, not an IP)
+    $looksLikeHostname = ($label -match '\.' -and $label -notmatch '^\d+\.\d+\.\d+\.\d+$')
+    if ($looksLikeHostname) {
+        Write-Host "[$(Get-Date -Format HH:mm:ss)] Forward DNS for $label via $DNS_SERVER..." -ForegroundColor DarkGray
+        try {
+            $fwdResult  = Resolve-DnsName -Name $label -Server $DNS_SERVER -Type A -ErrorAction Stop
+            $fwdIPs     = ($fwdResult | Where-Object { $_.Type -eq 'A' } | Select-Object -ExpandProperty IPAddress) -join ", "
+            if ($fwdIPs) {
+                $matches_ip = $fwdIPs -split ", " | Where-Object { $_ -eq $ip }
+                if ($matches_ip) {
+                    Write-Pass "Forward DNS $label -> $fwdIPs (matches target IP)"
+                    Add-Result $label "Forward DNS" "PASS" "$label -> $fwdIPs (matches target IP)"
+                } else {
+                    Write-Warn "Forward DNS $label -> $fwdIPs (does not match target IP $ip)"
+                    Add-Result $label "Forward DNS" "WARN" "$label -> $fwdIPs (expected $ip)"
+                }
+            } else {
+                Write-Fail "No A records for $label"
+                Add-Result $label "Forward DNS" "FAIL" "No A records returned for $label"
+            }
+        } catch {
+            Write-Fail "Forward DNS failed for $label"
+            Add-Result $label "Forward DNS" "FAIL" "Forward lookup failed: $($_.Exception.Message)"
+        }
     }
 
     Write-Host ""
