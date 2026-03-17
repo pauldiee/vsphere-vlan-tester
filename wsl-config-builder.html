@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  wsl-config-builder.html
+
+  Description:
+    Browser-based tool to build the TARGETS=() config block
+    for wsl-network-test.sh. Fill in label, IP, gateway and
+    optional HTTP/S URL per target, then copy the generated
+    block into the script.
+
+  Author : Paul van Dieen
+  Site   : https://www.hollebollevsan.nl
+  Repo   : https://github.com/pauldiee/vsphere-vlan-tester
+
+  Usage:
+    Open in any modern browser. Fill in targets, generate
+    config, copy and paste into wsl-network-test.sh.
+
+  Changelog:
+    v1.0  2026-03-16  Initial release
+    v1.1  2026-03-16  Added export to file button
+    v1.2  2026-03-16  Added import saved config (.txt) button
+    v1.3  2026-03-16  Added Load from vCenter VMs (vmdata.json) with
+                      selection modal
+  ============================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WSL Network Test — Config Builder</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; min-height: 100vh; padding: 28px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #c9d1d9; }
+.app-header { margin-bottom: 20px; }
+.app-title { font-size: 18px; font-weight: 500; color: #e6edf3; }
+.app-sub { font-size: 13px; color: #8b949e; margin-top: 4px; }
+.app-sub a { color: #58a6ff; text-decoration: none; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.toolbar-sep { width: 1px; height: 28px; background: #30363d; margin: 0 2px; }
+.btn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #c9d1d9; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.btn:hover { background: #21262d; border-color: #8b949e; }
+.btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
+.btn-primary:hover { background: #2ea043; }
+.btn-danger { color: #f85149; border-color: #f8514940; }
+.btn-import { border-color: #58a6ff40; color: #58a6ff; }
+.btn-import:hover { background: #58a6ff14; border-color: #58a6ff; }
+.btn-danger:hover { background: #f8514914; }
+.table-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
+.col-headers { display: grid; grid-template-columns: 1.6fr 1.1fr 1.1fr 1.4fr 80px 40px; gap: 0; padding: 9px 16px; border-bottom: 1px solid #30363d; background: #0d1117; }
+.col-headers span { font-size: 11px; font-weight: 500; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; }
+.vrow { display: grid; grid-template-columns: 1.6fr 1.1fr 1.1fr 1.4fr 80px 40px; gap: 8px; align-items: center; padding: 7px 16px; border-bottom: 1px solid #21262d; transition: background 0.1s; }
+.vrow:last-child { border-bottom: none; }
+.vrow:hover { background: #21262d30; }
+.empty-state { padding: 40px 20px; text-align: center; color: #8b949e; font-size: 13px; }
+input { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; padding: 5px 9px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; width: 100%; transition: border-color 0.15s; }
+input::placeholder { color: #484f58; }
+input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px #58a6ff18; }
+input.err { border-color: #f85149; }
+input.ok  { border-color: #3fb950; }
+.del-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #30363d; background: transparent; color: #8b949e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; padding: 0; transition: all 0.1s; }
+.del-btn:hover { background: #f8514914; color: #f85149; border-color: #f8514940; }
+.footer-bar { display: flex; align-items: center; padding: 9px 16px; border-top: 1px solid #21262d; background: #0d1117; }
+.vlan-count { font-size: 12px; color: #8b949e; }
+.output-section { margin-top: 20px; }
+.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.output-label { font-size: 13px; color: #8b949e; display: flex; align-items: center; gap: 8px; }
+.output-label::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; }
+.copy-btn { font-size: 12px; padding: 5px 14px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #8b949e; cursor: pointer; }
+.copy-btn:hover { background: #21262d; color: #e6edf3; }
+pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; color: #e6edf3; white-space: pre; overflow-x: auto; line-height: 1.8; }
+.kw { color: #ff7b72; }
+.st { color: #a5d6ff; }
+.cm { color: #8b949e; }
+</style>
+</head>
+<body>
+<div class="app-header">
+  <div class="app-title">WSL Network Test — Config Builder</div>
+  <div class="app-sub">Generate the TARGETS=() block for wsl-network-test.sh &nbsp;·&nbsp; <a href="https://www.hollebollevsan.nl" target="_blank">www.hollebollevsan.nl</a></div>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-primary" onclick="addRow()">+ Add target</button>
+  <button class="btn" onclick="generate()">Generate config &#8599;</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-import" onclick="document.getElementById('vm-file').click()">&#8595; Load from vCenter VMs</button>
+  <input type="file" id="vm-file" accept=".json" style="display:none" onchange="loadVMJson(this)">
+  <button class="btn btn-import" onclick="document.getElementById('txt-file').click()">&#8595; Import saved config</button>
+  <input type="file" id="txt-file" accept=".txt" style="display:none" onchange="loadTxt(this)">
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
+  <span id="toast" style="display:none"></span>
+</div>
+
+<div class="table-wrap">
+  <div class="col-headers">
+    <span>Label</span>
+    <span>IP address</span>
+    <span>Gateway</span>
+    <span>HTTP/S URL (optional)</span>
+    <span>Exp. code</span>
+    <span></span>
+  </div>
+  <div id="rows"></div>
+  <div class="footer-bar">
+    <span class="vlan-count" id="count">0 targets</span>
+  </div>
+</div>
+
+<div class="output-section" id="output-section" style="display:none">
+  <div class="output-header">
+    <div class="output-label">Config block ready — paste into wsl-network-test.sh</div>
+    <button class="copy-btn" id="copy-btn" onclick="copyConfig()">Copy to clipboard</button>
+      <button class="copy-btn" onclick="exportConfig()" style="margin-left:8px;">Export to file</button>
+  </div>
+  <pre id="output"></pre>
+</div>
+
+<script>
+let rows = [], uid = 0;
+
+const defaults = [
+  { label:'Server VLAN', ip:'192.168.10.1', gw:'192.168.10.1', url:'http://192.168.10.1',  code:'200' },
+  { label:'User VLAN',   ip:'192.168.20.1', gw:'192.168.20.1', url:'https://192.168.20.1', code:'200' },
+  { label:'DMZ VLAN',    ip:'192.168.30.1', gw:'192.168.30.1', url:'',                      code:''    },
+];
+
+function addRow(data) {
+  rows.push({ id: uid++, label:'', ip:'', gw:'', url:'', code:'200', ...(data||{}) });
+  render();
+}
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  render();
+  if (document.getElementById('output-section').style.display !== 'none') generate();
+}
+function getVal(id, field) { const el = document.getElementById(`${field}-${id}`); return el ? el.value.trim() : ''; }
+function isValidIP(ip) { return /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip) && ip.split('.').every(n => +n >= 0 && +n <= 255); }
+function validateIP(el) { const v = el.value.trim(); if (!v) { el.classList.remove('ok','err'); return; } el.classList.toggle('err',!isValidIP(v)); el.classList.toggle('ok',isValidIP(v)); }
+function sync(id, field, value) { const r = rows.find(r => r.id === id); if (r) r[field] = value; if (document.getElementById('output-section').style.display !== 'none') generate(); }
+function esc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function render() {
+  const c = document.getElementById('rows');
+  if (!rows.length) { c.innerHTML = '<div class="empty-state">No targets yet — click "+ Add target" to get started</div>'; document.getElementById('count').textContent = '0 targets'; return; }
+  c.innerHTML = '';
+  rows.forEach(r => {
+    const d = document.createElement('div'); d.className = 'vrow';
+    d.innerHTML = `
+      <input id="label-${r.id}" value="${esc(r.label)}" placeholder="Server VLAN"                     oninput="sync(${r.id},'label',this.value)">
+      <input id="ip-${r.id}"    value="${esc(r.ip)}"    placeholder="192.168.10.1"                    oninput="sync(${r.id},'ip',this.value);validateIP(this)">
+      <input id="gw-${r.id}"    value="${esc(r.gw)}"    placeholder="192.168.10.1"                    oninput="sync(${r.id},'gw',this.value);validateIP(this)">
+      <input id="url-${r.id}"   value="${esc(r.url)}"   placeholder="http:// or https:// or leave empty" oninput="sync(${r.id},'url',this.value)">
+      <input id="code-${r.id}"  value="${esc(r.code)}"  placeholder="200" style="text-align:center"   oninput="sync(${r.id},'code',this.value)">
+      <button class="del-btn" onclick="removeRow(${r.id})">x</button>`;
+    c.appendChild(d);
+  });
+  document.getElementById('count').textContent = `${rows.length} target${rows.length !== 1 ? 's' : ''}`;
+  if (document.getElementById('output-section').style.display !== 'none') generate();
+}
+
+function generate() {
+  if (!rows.length) { document.getElementById('output-section').style.display = 'none'; return; }
+  const lines = rows.map(r => {
+    const label = getVal(r.id,'label')||r.label||'Target';
+    const ip    = getVal(r.id,'ip')   ||r.ip   ||'0.0.0.0';
+    const gw    = getVal(r.id,'gw')   ||r.gw   ||'0.0.0.0';
+    const url   = getVal(r.id,'url')  ||r.url  ||'';
+    const code  = getVal(r.id,'code') ||r.code ||'';
+    const proto = url.startsWith('https') ? 'HTTPS' : url ? 'HTTP' : '';
+    const comment = proto ? ` <span class="cm"># ${proto} test</span>` : ` <span class="cm"># no HTTP/S test</span>`;
+    return `  <span class="st">"${label}|${ip}|${gw}|${url}|${code}"</span>${comment}`;
+  });
+  document.getElementById('output').innerHTML = `<span class="kw">TARGETS</span>=(\n${lines.join('\n')}\n)`;
+  document.getElementById('output-section').style.display = 'block';
+}
+
+function copyConfig() {
+  const lines = rows.map(r => {
+    const label = getVal(r.id,'label')||r.label||'Target';
+    const ip    = getVal(r.id,'ip')   ||r.ip   ||'0.0.0.0';
+    const gw    = getVal(r.id,'gw')   ||r.gw   ||'0.0.0.0';
+    const url   = getVal(r.id,'url')  ||r.url  ||'';
+    const code  = getVal(r.id,'code') ||r.code ||'';
+    return `  "${label}|${ip}|${gw}|${url}|${code}"`;
+  });
+  navigator.clipboard.writeText(`TARGETS=(\n${lines.join('\n')}\n)`).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+  });
+}
+
+function exportConfig() {
+  const lines = rows.map(r => {
+    const label = getVal(r.id,'label')||r.label||'Target';
+    const ip    = getVal(r.id,'ip')   ||r.ip   ||'0.0.0.0';
+    const gw    = getVal(r.id,'gw')   ||r.gw   ||'0.0.0.0';
+    const url   = getVal(r.id,'url')  ||r.url  ||'';
+    const code  = getVal(r.id,'code') ||r.code ||'';
+    return `  "${label}|${ip}|${gw}|${url}|${code}"`;
+  });
+  const text = `TARGETS=(\n${lines.join('\n')}\n)`;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'wsl-targets-config.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadVMJson(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const arr = Array.isArray(data) ? data : [data];
+      if (!arr.length) { showVMToast('No VM entries found', false); return; }
+      // Show selection modal
+      openVMModal(arr, file.name);
+    } catch { showVMToast('Invalid JSON file', false); }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function openVMModal(vms, filename) {
+  // Build modal inline since wsl builder has no modal yet
+  const existing = document.getElementById('vm-modal');
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'vm-modal';
+  backdrop.style.cssText = 'position:fixed;inset:0;background:#00000099;display:flex;align-items:center;justify-content:center;z-index:100;';
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;width:520px;max-width:90vw;';
+
+  const vmRows = vms.map((vm, i) => `
+    <div class="vm-item" data-idx="${i}" style="display:grid;grid-template-columns:24px 1fr 120px 120px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid #21262d;cursor:pointer;" onclick="this.querySelector('input').checked=!this.querySelector('input').checked;this.style.background=this.querySelector('input').checked?'#1f6feb20':'transparent'">
+      <input type="checkbox" style="accent-color:#58a6ff;width:14px;height:14px;" onclick="event.stopPropagation();this.closest('.vm-item').style.background=this.checked?'#1f6feb20':'transparent'">
+      <span style="font-size:13px;color:#e6edf3;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${vm.label||vm.name||''}</span>
+      <span style="font-size:12px;color:#8b949e;">${vm.ip||''}</span>
+      <span style="font-size:12px;color:#8b949e;">${vm.gateway||'no gw'}</span>
+    </div>`).join('');
+
+  modal.innerHTML = `
+    <h3 style="font-size:15px;font-weight:500;color:#e6edf3;margin-bottom:8px;">Select VMs to import</h3>
+    <p style="font-size:13px;color:#8b949e;margin-bottom:12px;">From <strong style="color:#c9d1d9">${filename}</strong> — ${vms.length} powered-on VMs with IPs</p>
+    <span onclick="document.querySelectorAll('#vm-modal .vm-item input').forEach(cb=>{cb.checked=!cb.checked;cb.closest('.vm-item').style.background=cb.checked?'#1f6feb20':'transparent'})" style="font-size:12px;color:#58a6ff;cursor:pointer;margin-bottom:8px;display:inline-block;">Select all</span>
+    <div style="max-height:320px;overflow-y:auto;border:1px solid #30363d;border-radius:8px;margin-bottom:16px;">${vmRows}</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="document.getElementById('vm-modal').remove()" style="cursor:pointer;font-size:13px;padding:7px 16px;border-radius:6px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;">Cancel</button>
+      <button id="vm-import-btn" onclick="importVMs(${JSON.stringify(vms).replace(/"/g,'&quot;')})" style="cursor:pointer;font-size:13px;font-weight:500;padding:7px 16px;border-radius:6px;border:1px solid #2ea043;background:#238636;color:#fff;">Import selected</button>
+    </div>`;
+
+  backdrop.appendChild(modal);
+  document.body.appendChild(backdrop);
+  backdrop.onclick = e => { if (e.target === backdrop) backdrop.remove(); };
+}
+
+function importVMs(vms) {
+  const items = document.querySelectorAll('#vm-modal .vm-item');
+  const selected = [...items].filter(i => i.querySelector('input').checked);
+  if (!selected.length) { showVMToast('No VMs selected', false); return; }
+  selected.forEach(item => {
+    const vm = vms[+item.dataset.idx];
+    addRow({ label: vm.label||vm.name||'', ip: vm.ip||'', gw: vm.gateway||'', url: '', code: '' });
+  });
+  document.getElementById('vm-modal').remove();
+  showVMToast(`Imported ${selected.length} VM${selected.length !== 1 ? 's' : ''}`, true);
+}
+
+function showVMToast(msg, ok) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = ok ? 'toast toast-ok' : 'toast toast-err';
+  t.style.display = 'inline-block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function loadTxt(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const matches = [...text.matchAll(/"([^"]+)\|([^"]+)\|([^"]+)\|([^"]*)\|([^"]*)"/g)];
+    if (!matches.length) {
+      const el = document.getElementById('toast');
+      el.textContent = 'No valid TARGETS entries found';
+      el.className = 'toast toast-err';
+      el.style.display = 'inline-block';
+      setTimeout(() => el.style.display = 'none', 3000);
+      input.value = ''; return;
+    }
+    matches.forEach(m => addRow({ label: m[1], ip: m[2], gw: m[3], url: m[4], code: m[5] }));
+    const el = document.getElementById('toast');
+    el.textContent = `Imported ${matches.length} entr${matches.length !== 1 ? 'ies' : 'y'} from file`;
+    el.className = 'toast toast-ok';
+    el.style.display = 'inline-block';
+    setTimeout(() => el.style.display = 'none', 3000);
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() { rows = []; document.getElementById('output-section').style.display = 'none'; render(); }
+
+defaults.forEach(d => addRow(d));
+</script>
+</body>
+</html>

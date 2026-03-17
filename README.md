@@ -15,6 +15,10 @@
 | `Get-PortGroupData.ps1` | PowerCLI script — pulls port groups and NSX segments, writes `portgroups.json`. Prompts for credentials on first run and saves them encrypted. |
 | `vlan-config-builder.html` | Browser-based tool — builds the `VLANS=()` config block. Supports manual entry and JSON import from `portgroups.json`. |
 | `vlan-test-guide.docx` | Full user and configuration guide |
+| `wsl-network-test.sh` | Lightweight network tester for WSL — ping, DNS, HTTP/HTTPS, TCP, latency |
+| `wsl-config-builder.html` | Config builder for wsl-network-test.sh and ps-network-test.ps1 |
+| `ps-network-test.ps1` | Windows PowerShell network tester — ping and DNS, reads same TARGETS config |
+| `Get-VMData.ps1` | PowerCLI script — pulls powered-on VM IPs and gateways, writes vmdata.json |
 
 ---
 
@@ -129,6 +133,8 @@ Reports are written to `./vlan-reports/`.
 | v1.8 | | Added script header with author, site, changelog |
 | v1.9 | | Added TCP reachability, ICMP vs TCP comparison, UDP test, latency baseline |
 | v1.10 | 2026-03-13 | Bound all tests to test NIC |
+| v1.11 | 2026-03-16 | Added PARTIAL status when >50% of tests pass |
+| v1.12 | 2026-03-16 | Cleanup: removed duplicate LATENCY_WARN_MS, added PARTIAL to terminal summary |
 
 ### Get-PortGroupData.ps1
 | Version | Date | Changes |
@@ -146,6 +152,35 @@ Reports are written to `./vlan-reports/`.
 | v1.2 | 2026-03-13 | vCenter/NSX JSON import with source badges and selection modal |
 | v1.3 | 2026-03-13 | Fixed gateway stripping subnet prefix, IP derived from subnet, description falls back to port group name, source column spacing |
 | v1.4 | 2026-03-13 | Updated source column width and badge padding |
+| v1.5 | 2026-03-16 | Added export to file and import saved config buttons |
+
+### wsl-network-test.sh
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-03-16 | Initial release — ping, DNS, HTTP/HTTPS, TCP, latency baseline |
+| v1.1 | 2026-03-16 | Added HTTP/HTTPS detection with -k flag for self-signed certs |
+| v1.2 | 2026-03-16 | Fixed HTTP status code comparison |
+| v1.3 | 2026-03-16 | Added PARTIAL status when >50% of tests pass |
+| v1.4 | 2026-03-16 | Cleanup: fixed summary card order, added PARTIAL to terminal summary |
+
+### ps-network-test.ps1
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-03-16 | Initial release — ping and DNS via Test-Connection and Resolve-DnsName |
+| v1.1 | 2026-03-16 | DNS now does PTR on target IP + forward lookup if label is a hostname |
+
+### Get-VMData.ps1
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-03-16 | Initial release — pulls powered-on VMs with IPs and gateways from vCenter |
+
+### wsl-config-builder.html
+| Version | Date | Changes |
+|---------|------|---------|
+| v1.0 | 2026-03-16 | Initial release |
+| v1.1 | 2026-03-16 | Added export to file button |
+| v1.2 | 2026-03-16 | Added import saved config (.txt) button |
+| v1.3 | 2026-03-16 | Added Load from vCenter VMs (vmdata.json) with selection modal |
 
 ---
 

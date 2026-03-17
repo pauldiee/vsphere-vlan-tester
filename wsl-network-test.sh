@@ -43,19 +43,9 @@ LATENCY_WARN_MS=50
 # HTTP_URL can be http:// or https:// — leave empty to skip HTTP/S test
 # For HTTPS with self-signed certs the test uses curl -k (insecure)
 TARGETS=(
-  "nsx-v4|10.1.1.38|10.1.1.1||"
-  "HolleBolleUbuntu-1|10.1.1.230|10.1.1.1||"
-  "opsnet-01a|10.1.1.61|10.1.1.1||"
-  "opslcm-a|10.1.1.36|10.1.1.1||"
-  "edge-mgmt-01a|10.1.1.180|10.1.1.1||"
-  "opslogs-01a|10.1.1.46|10.1.1.1||"
-  "ops-a|10.1.1.30|10.1.1.1||"
-  "edge-mgmt-02a|10.1.1.181|10.1.1.1||"
-  "opscollector-01a|10.1.1.41|10.1.1.1||"
-  "nsx-mgmt-01a|10.1.1.21|10.1.1.1||"
-  "sddcmanager-a|10.1.1.5|10.1.1.1||"
-  "opsnetcollector-01a|10.1.1.62|10.1.1.1||"
-  "vc-mgmt-a|10.1.1.10|10.1.1.1||"
+  "Server VLAN|192.168.10.1|192.168.10.1|http://192.168.10.1|200"
+  "User VLAN|192.168.20.1|192.168.20.1|https://192.168.20.1|200"
+  "DMZ VLAN|192.168.30.1|192.168.30.1||"
 )
 
 # --- Output ---

@@ -112,7 +112,7 @@ function Write-Warn { param($msg) Write-Host "    ! $msg" -ForegroundColor Yello
 # ============================================================
 Write-Host ""
 Write-Host "  +==========================================+" -ForegroundColor Cyan
-Write-Host "  |     Windows Network Tester               |" -ForegroundColor Cyan
+Write-Host "  |     Windows Network Tester  v1.1         |" -ForegroundColor Cyan
 Write-Host "  |     hollebollevsan.nl                    |" -ForegroundColor Cyan
 Write-Host "  +==========================================+" -ForegroundColor Cyan
 Write-Host ""
