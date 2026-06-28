@@ -2,7 +2,8 @@
 
 **Author:** Paul van Dieen  
 **Site:** [www.hollebollevsan.nl](https://www.hollebollevsan.nl)  
-**Repo:** [github.com/pauldiee/vsphere-vlan-tester](https://github.com/pauldiee/vsphere-vlan-tester)
+**Repo:** [github.com/pauldiee/vsphere-vlan-tester](https://github.com/pauldiee/vsphere-vlan-tester)  
+**Tools:** [pauldiee.github.io/vsphere-vlan-tester](https://pauldiee.github.io/vsphere-vlan-tester)
 
 > A complete toolset for automated network validation in VMware vSphere environments. From VLAN testing on a dedicated probe VM to quick connectivity checks from WSL or Windows — with browser-based config builders and vCenter/NSX data import to make setup fast.
 
