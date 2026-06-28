@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vSphere VLAN Tester — ITQ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Regular.otf") format("opentype"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-RegularItalic.otf") format("opentype"); font-weight:400; font-style:italic; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Semibold.otf") format("opentype"); font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-SemiboldItalic.otf") format("opentype"); font-weight:600; font-style:italic; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Bold.otf") format("opentype"); font-weight:700; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-BoldItalic.otf") format("opentype"); font-weight:700; font-style:italic; font-display:swap; }
+@font-face { font-family:"JetBrains Mono"; src:url("assets/fonts/JetBrainsMono-VariableFont_wght.ttf") format("truetype"); font-weight:100 800; font-style:normal; font-display:swap; }
+@font-face { font-family:"JetBrains Mono"; src:url("assets/fonts/JetBrainsMono-Italic-VariableFont_wght.ttf") format("truetype"); font-weight:100 800; font-style:italic; font-display:swap; }
+
+:root {
+  --itq-royal-blue: #040559;
+  --itq-orange: #FF4F41;
+  --itq-light-blue: #CDE3F7;
+  --itq-white: #FFFFFF;
+  --itq-mist: #F4F8FD;
+  --itq-hairline: #E2E8F0;
+  --itq-dark-grey: #535353;
+  --itq-light-grey: #A8A8A8;
+  --itq-royal-40: #9B9BBF;
+  --itq-light-blue-soft: #E6F1FB;
+  --state-orange-hover: #E63E31;
+  --state-tint-hover: rgba(4,5,90,0.06);
+  --font-sans: "Titillium", Calibri, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --shadow-sm: 0 2px 6px rgba(4,5,90,0.08);
+  --shadow-md: 0 8px 24px rgba(4,5,90,0.10);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --dur: 150ms;
+  --ease: cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body { font-family: var(--font-sans); font-size: 16px; line-height: 1.55; color: var(--itq-royal-blue); background: #FFFFFF; -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; display: block; }
+a { color: var(--itq-orange); text-decoration: none; transition: color var(--dur) var(--ease); }
+a:hover { color: var(--state-orange-hover); }
+::selection { background: var(--itq-orange); color: #FFFFFF; }
+
+/* ---- Site header ---- */
+.site-header { background: #FFFFFF; border-bottom: 1px solid var(--itq-hairline); position: sticky; top: 0; z-index: 50; }
+.site-header::before { content:''; display:block; height:3px; background: var(--itq-orange); }
+.site-header-inner { max-width: 1200px; margin: 0 auto; padding: 0 32px; height: 60px; display: flex; align-items: center; gap: 16px; }
+.site-logo img { height: 34px; width: auto; }
+.site-divider { width: 1px; height: 24px; background: var(--itq-hairline); flex-shrink: 0; }
+.site-project { font-weight: 600; font-size: 14px; color: var(--itq-royal-blue); white-space: nowrap; }
+.site-nav { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.site-nav a { font-size: 13px; font-weight: 600; color: var(--itq-dark-grey); text-decoration: none; padding: 6px 14px; border-radius: var(--radius-sm); transition: all var(--dur) var(--ease); white-space: nowrap; }
+.site-nav a:hover { color: var(--itq-royal-blue); background: var(--state-tint-hover); }
+.site-nav a.btn-nav { background: var(--itq-orange); color: #FFFFFF; padding: 6px 16px; }
+.site-nav a.btn-nav:hover { background: var(--state-orange-hover); }
+
+/* ---- Layout ---- */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+/* ---- Hero ---- */
+.hero { background: var(--itq-royal-blue); padding: 72px 0 80px; }
+.hero .container { display: flex; flex-direction: column; align-items: flex-start; }
+.hero-eyebrow { font-family: var(--font-sans); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--itq-orange); margin-bottom: 16px; }
+.hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; color: #FFFFFF; line-height: 1.1; letter-spacing: -0.01em; margin-bottom: 20px; }
+.hero h1 .accent { color: var(--itq-orange); }
+.hero-sub { font-size: 17px; font-weight: 400; color: var(--itq-light-blue); max-width: 560px; line-height: 1.65; margin-bottom: 36px; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-hero-primary { display: inline-flex; align-items: center; gap: 8px; background: var(--itq-orange); color: #FFFFFF; font-family: var(--font-sans); font-size: 14px; font-weight: 700; padding: 12px 24px; border-radius: var(--radius-sm); text-decoration: none; transition: background var(--dur) var(--ease); }
+.btn-hero-primary:hover { background: var(--state-orange-hover); color: #FFFFFF; }
+.btn-hero-secondary { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: #FFFFFF; font-family: var(--font-sans); font-size: 14px; font-weight: 600; padding: 11px 24px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.3); text-decoration: none; transition: all var(--dur) var(--ease); }
+.btn-hero-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); color: #FFFFFF; }
+
+/* ---- Tools section ---- */
+.tools-section { padding: 72px 0; }
+.section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--itq-orange); margin-bottom: 12px; }
+.section-title { font-size: 1.75rem; font-weight: 700; color: var(--itq-royal-blue); margin-bottom: 40px; }
+.tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+.tool-card { display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid var(--itq-hairline); border-radius: var(--radius-lg); padding: 32px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease), border-color var(--dur) var(--ease); cursor: pointer; }
+.tool-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--itq-royal-40); color: inherit; }
+.card-icon { width: 48px; height: 48px; background: rgba(255,79,65,0.1); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--itq-orange); margin-bottom: 20px; }
+.card-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--itq-orange); margin-bottom: 8px; }
+.tool-card h2 { font-size: 1.25rem; font-weight: 700; color: var(--itq-royal-blue); margin-bottom: 12px; }
+.tool-card p { font-size: 14px; color: var(--itq-dark-grey); line-height: 1.65; flex: 1; margin-bottom: 24px; }
+.tool-card code { font-family: var(--font-mono); font-size: 12px; background: var(--itq-mist); color: var(--itq-royal-blue); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--itq-hairline); }
+.card-link { font-size: 14px; font-weight: 700; color: var(--itq-orange); display: flex; align-items: center; gap: 8px; }
+.tool-card:hover .card-link { color: var(--state-orange-hover); }
+
+/* ---- Toolset overview ---- */
+.overview-section { background: var(--itq-mist); border-top: 1px solid var(--itq-hairline); border-bottom: 1px solid var(--itq-hairline); padding: 64px 0; }
+.overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 32px; }
+.overview-item { background: #FFFFFF; border: 1px solid var(--itq-hairline); border-radius: var(--radius-md); padding: 16px 20px; display: flex; gap: 14px; align-items: flex-start; }
+.overview-item-icon { width: 32px; height: 32px; background: var(--itq-light-blue-soft); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--itq-royal-blue); flex-shrink: 0; margin-top: 2px; }
+.overview-item-body { flex: 1; }
+.overview-item-title { font-size: 13px; font-weight: 700; color: var(--itq-royal-blue); margin-bottom: 2px; }
+.overview-item-title code { font-family: var(--font-mono); font-size: 12px; font-weight: 400; background: var(--itq-mist); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--itq-hairline); }
+.overview-item-desc { font-size: 12px; color: var(--itq-dark-grey); line-height: 1.5; }
+.overview-item-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.badge-browser { background: rgba(255,79,65,0.1); color: var(--itq-orange); border: 1px solid rgba(255,79,65,0.2); }
+.badge-bash { background: var(--itq-light-blue-soft); color: var(--itq-royal-blue); border: 1px solid rgba(4,5,89,0.15); }
+.badge-ps { background: #EDE8F5; color: #4A1D8C; border: 1px solid rgba(74,29,140,0.2); }
+
+/* ---- Disclaimer banner ---- */
+.disclaimer-banner { background: var(--itq-mist); border-bottom: 1px solid var(--itq-hairline); padding: 7px 32px; text-align: center; font-size: 12px; color: var(--itq-dark-grey); }
+.disclaimer-banner strong { font-weight: 600; color: var(--itq-royal-blue); }
+
+/* ---- Footer ---- */
+.site-footer { background: var(--itq-royal-blue); padding: 32px 0; }
+.footer-inner { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.footer-inner span { font-size: 13px; color: var(--itq-light-blue); }
+.footer-inner a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); text-decoration: none; transition: color var(--dur) var(--ease); }
+.footer-inner a:hover { color: #FFFFFF; }
+.footer-sep { color: rgba(255,255,255,0.2); }
+
+@media (max-width: 700px) {
+  .site-header-inner { padding: 0 16px; }
+  .container { padding: 0 16px; }
+  .hero { padding: 48px 0 56px; }
+  .tools-section, .overview-section { padding: 48px 0; }
+  .overview-grid { grid-template-columns: 1fr; }
+  .site-nav a:not(.btn-nav) { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="index.html" class="site-logo"><img src="assets/logo/itq-logo-primary.png" alt="ITQ"></a>
+    <span class="site-divider"></span>
+    <span class="site-project">vSphere VLAN Tester</span>
+    <nav class="site-nav">
+      <a href="vlan-config-builder.html">VLAN Builder</a>
+      <a href="wsl-config-builder.html">WSL Builder</a>
+      <a href="https://github.com/pauldiee/vsphere-vlan-tester" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="disclaimer-banner"><strong>Unofficial project</strong> by Paul van Dieen. Not affiliated with, authorized, or endorsed by ITQ or VMware.</div>
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">VMware vSphere Toolset</div>
+    <h1>Network Validation <span class="accent">Tools</span></h1>
+    <p class="hero-sub">Automated network validation for VMware vSphere environments. Build config blocks visually, import port groups from vCenter and NSX, and run targeted VLAN and connectivity tests.</p>
+    <div class="hero-actions">
+      <a href="vlan-config-builder.html" class="btn-hero-primary">VLAN Config Builder <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="wsl-config-builder.html" class="btn-hero-secondary">WSL Config Builder</a>
+    </div>
+  </div>
+</section>
+
+<section class="tools-section">
+  <div class="container">
+    <div class="section-label">Browser Tools</div>
+    <div class="section-title">Build your config in minutes</div>
+    <div class="tools-grid">
+      <a href="vlan-config-builder.html" class="tool-card">
+        <div class="card-icon"><i class="fa-solid fa-network-wired"></i></div>
+        <div class="card-eyebrow">vSphere Tool</div>
+        <h2>VLAN Config Builder</h2>
+        <p>Build the <code>VLANS=()</code> config block for <code>vlan-test.sh</code>. Import port groups from vCenter and NSX, fill in IP addresses, and generate the config in one click.</p>
+        <div class="card-link">Open tool <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+      <a href="wsl-config-builder.html" class="tool-card">
+        <div class="card-icon"><i class="fa-solid fa-terminal"></i></div>
+        <div class="card-eyebrow">Connectivity Tool</div>
+        <h2>WSL Config Builder</h2>
+        <p>Build the <code>TARGETS=()</code> block for <code>wsl-network-test.sh</code> and <code>ps-network-test.ps1</code>. Import VMs from vCenter, set HTTP targets and expected status codes.</p>
+        <div class="card-link">Open tool <i class="fa-solid fa-arrow-right"></i></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="overview-section">
+  <div class="container">
+    <div class="section-label">Full Toolset</div>
+    <div class="section-title">All tools in this repo</div>
+    <div class="overview-grid">
+      <div class="overview-item">
+        <div class="overview-item-icon"><i class="fa-solid fa-network-wired"></i></div>
+        <div class="overview-item-body">
+          <div class="overview-item-title" style="display:flex;align-items:center;gap:8px;"><code>vlan-test.sh</code> <span class="overview-item-badge badge-bash">Bash</span></div>
+          <div class="overview-item-desc">Full 11-test VLAN battery on a dedicated Ubuntu probe VM via vSphere port group rotation. Binds all tests to the test NIC.</div>
+        </div>
+      </div>
+      <div class="overview-item">
+        <div class="overview-item-icon"><i class="fa-solid fa-terminal"></i></div>
+        <div class="overview-item-body">
+          <div class="overview-item-title" style="display:flex;align-items:center;gap:8px;"><code>wsl-network-test.sh</code> <span class="overview-item-badge badge-bash">Bash</span></div>
+          <div class="overview-item-desc">Lightweight connectivity tester for WSL: ping, DNS, HTTP/S, TCP, latency. Same dark HTML report as vlan-test.sh.</div>
+        </div>
+      </div>
+      <div class="overview-item">
+        <div class="overview-item-icon"><i class="fa-brands fa-windows"></i></div>
+        <div class="overview-item-body">
+          <div class="overview-item-title" style="display:flex;align-items:center;gap:8px;"><code>ps-network-test.ps1</code> <span class="overview-item-badge badge-ps">PowerShell</span></div>
+          <div class="overview-item-desc">Windows PowerShell ping and DNS tester. Reads the same target config exported by WSL Config Builder.</div>
+        </div>
+      </div>
+      <div class="overview-item">
+        <div class="overview-item-icon"><i class="fa-solid fa-server"></i></div>
+        <div class="overview-item-body">
+          <div class="overview-item-title" style="display:flex;align-items:center;gap:8px;"><code>Get-PortGroupData.ps1</code> <span class="overview-item-badge badge-ps">PowerShell</span></div>
+          <div class="overview-item-desc">Pulls port groups and NSX segments from vCenter, writes portgroups.json for import into the VLAN Config Builder.</div>
+        </div>
+      </div>
+      <div class="overview-item">
+        <div class="overview-item-icon"><i class="fa-solid fa-database"></i></div>
+        <div class="overview-item-body">
+          <div class="overview-item-title" style="display:flex;align-items:center;gap:8px;"><code>Get-VMData.ps1</code> <span class="overview-item-badge badge-ps">PowerShell</span></div>
+          <div class="overview-item-desc">Pulls powered-on VM IPs and gateways from vCenter, writes vmdata.json for import into the WSL Config Builder.</div>
+        </div>
+      </div>
+      <div class="overview-item">
+        <div class="overview-item-icon"><i class="fa-solid fa-globe"></i></div>
+        <div class="overview-item-body">
+          <div class="overview-item-title" style="display:flex;align-items:center;gap:8px;">Config builders <span class="overview-item-badge badge-browser">Browser</span></div>
+          <div class="overview-item-desc">Two browser-based tools (this site) to build config blocks visually. No install or server needed: open in any modern browser.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <img src="assets/logo/itq-logo-primary.png" alt="ITQ" style="height:28px;filter:brightness(0) invert(1);opacity:0.9;">
+      <span class="footer-sep">|</span>
+      <span>By Paul van Dieen</span>
+      <span class="footer-sep">·</span>
+      <a href="https://www.hollebollevsan.nl" target="_blank" rel="noopener">www.hollebollevsan.nl</a>
+      <span class="footer-sep">·</span>
+      <a href="https://github.com/pauldiee/vsphere-vlan-tester" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

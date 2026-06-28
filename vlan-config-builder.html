@@ -27,96 +27,202 @@
                       used as description fallback
     v1.4  2026-03-16  Added export to file button
     v1.5  2026-03-16  Added import saved config (.txt) button
+    v1.6  2026-06-28  Restyled to ITQ Design System (Brand Identity Book 2026)
   ============================================================
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VLAN Config Builder — hollebollevsan.nl</title>
+<title>VLAN Config Builder — ITQ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0d1117; min-height: 100vh; padding: 28px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #c9d1d9; }
-.app-header { margin-bottom: 24px; }
-.app-title { font-size: 18px; font-weight: 500; color: #e6edf3; }
-.app-sub { font-size: 13px; color: #8b949e; margin-top: 4px; }
-.app-sub a { color: #58a6ff; text-decoration: none; }
-.toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
-.toolbar-sep { width: 1px; height: 28px; background: #30363d; margin: 0 2px; }
-.btn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #c9d1d9; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.btn:hover { background: #21262d; border-color: #8b949e; }
-.btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
-.btn-primary:hover { background: #2ea043; }
-.btn-import { border-color: #58a6ff40; color: #58a6ff; }
-.btn-import:hover { background: #58a6ff14; border-color: #58a6ff; }
-.btn-danger { color: #f85149; border-color: #f8514940; }
-.btn-danger:hover { background: #f8514914; }
-.table-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
-.col-headers { display: grid; grid-template-columns: 80px 1.8fr 1.2fr 70px 1.2fr 1.5fr 80px 48px; gap: 0; padding: 10px 16px; border-bottom: 1px solid #30363d; background: #0d1117; }
-.col-headers span { font-size: 12px; font-weight: 500; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; }
-.vrow { display: grid; grid-template-columns: 80px 1.8fr 1.2fr 70px 1.2fr 1.5fr 80px 48px; gap: 8px; align-items: center; padding: 8px 16px; border-bottom: 1px solid #21262d; transition: background 0.1s; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Regular.otf") format("opentype"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-RegularItalic.otf") format("opentype"); font-weight:400; font-style:italic; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Semibold.otf") format("opentype"); font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-SemiboldItalic.otf") format("opentype"); font-weight:600; font-style:italic; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Bold.otf") format("opentype"); font-weight:700; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-BoldItalic.otf") format("opentype"); font-weight:700; font-style:italic; font-display:swap; }
+@font-face { font-family:"JetBrains Mono"; src:url("assets/fonts/JetBrainsMono-VariableFont_wght.ttf") format("truetype"); font-weight:100 800; font-style:normal; font-display:swap; }
+@font-face { font-family:"JetBrains Mono"; src:url("assets/fonts/JetBrainsMono-Italic-VariableFont_wght.ttf") format("truetype"); font-weight:100 800; font-style:italic; font-display:swap; }
+
+:root {
+  --itq-royal-blue: #040559;
+  --itq-orange: #FF4F41;
+  --itq-light-blue: #CDE3F7;
+  --itq-white: #FFFFFF;
+  --itq-mist: #F4F8FD;
+  --itq-hairline: #E2E8F0;
+  --itq-dark-grey: #535353;
+  --itq-light-grey: #A8A8A8;
+  --itq-royal-40: #9B9BBF;
+  --itq-light-blue-soft: #E6F1FB;
+  --state-orange-hover: #E63E31;
+  --state-tint-hover: rgba(4,5,90,0.06);
+  --font-sans: "Titillium", Calibri, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --shadow-sm: 0 2px 6px rgba(4,5,90,0.08);
+  --shadow-md: 0 8px 24px rgba(4,5,90,0.10);
+  --shadow-focus: 0 0 0 3px rgba(255,79,65,0.30);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --dur: 120ms;
+  --ease: cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: var(--font-sans); font-size: 15px; line-height: 1.55; color: var(--itq-royal-blue); background: #FFFFFF; -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; display: block; }
+::selection { background: var(--itq-orange); color: #FFFFFF; }
+
+/* ---- Site header ---- */
+.site-header { background: #FFFFFF; border-bottom: 1px solid var(--itq-hairline); position: sticky; top: 0; z-index: 50; }
+.site-header::before { content:''; display:block; height:3px; background: var(--itq-orange); }
+.site-header-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 58px; display: flex; align-items: center; gap: 14px; }
+.site-logo img { height: 32px; width: auto; }
+.site-divider { width: 1px; height: 22px; background: var(--itq-hairline); flex-shrink: 0; }
+.site-project { font-weight: 600; font-size: 13px; color: var(--itq-royal-blue); white-space: nowrap; }
+.site-nav { margin-left: auto; display: flex; gap: 2px; align-items: center; }
+.site-nav a { font-size: 13px; font-weight: 600; color: var(--itq-dark-grey); text-decoration: none; padding: 5px 12px; border-radius: var(--radius-sm); transition: all var(--dur) var(--ease); white-space: nowrap; }
+.site-nav a:hover { color: var(--itq-royal-blue); background: var(--state-tint-hover); }
+.site-nav a.active { color: var(--itq-orange); background: rgba(255,79,65,0.08); }
+.site-nav a.btn-gh { color: var(--itq-dark-grey); }
+
+/* ---- Disclaimer banner ---- */
+.disclaimer-banner { background: var(--itq-mist); border-bottom: 1px solid var(--itq-hairline); padding: 6px 32px; text-align: center; font-size: 12px; color: var(--itq-dark-grey); }
+.disclaimer-banner strong { font-weight: 600; color: var(--itq-royal-blue); }
+
+/* ---- Page main ---- */
+.page-main { max-width: 1280px; margin: 0 auto; padding: 28px 32px 56px; }
+
+/* ---- App header ---- */
+.app-header { margin-bottom: 20px; }
+.app-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--itq-orange); margin-bottom: 4px; }
+.app-title { font-size: 20px; font-weight: 700; color: var(--itq-royal-blue); }
+.app-sub { font-size: 13px; color: var(--itq-dark-grey); margin-top: 3px; }
+.app-sub a { color: var(--itq-orange); text-decoration: none; font-weight: 600; }
+.app-sub a:hover { color: var(--state-orange-hover); }
+
+/* ---- Toolbar ---- */
+.toolbar { display: flex; gap: 7px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.toolbar-sep { width: 1px; height: 26px; background: var(--itq-hairline); margin: 0 3px; flex-shrink: 0; }
+
+/* ---- Buttons ---- */
+.btn { cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 600; padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: #FFFFFF; color: var(--itq-royal-blue); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: all var(--dur) var(--ease); line-height: 1.2; }
+.btn:hover { background: var(--state-tint-hover); border-color: var(--itq-royal-40); }
+.btn-primary { background: var(--itq-orange); border-color: var(--itq-orange); color: #FFFFFF; }
+.btn-primary:hover { background: var(--state-orange-hover); border-color: var(--state-orange-hover); }
+.btn-import { color: var(--itq-orange); border-color: rgba(255,79,65,0.35); background: rgba(255,79,65,0.04); }
+.btn-import:hover { background: rgba(255,79,65,0.10); border-color: var(--itq-orange); }
+.btn-danger { color: #B91C1C; border-color: rgba(185,28,28,0.3); background: transparent; }
+.btn-danger:hover { background: rgba(185,28,28,0.06); border-color: rgba(185,28,28,0.5); }
+
+/* Toast */
+.toast { font-family: var(--font-sans); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid transparent; }
+.toast-ok  { color: #166534; background: #DCFCE7; border-color: rgba(22,101,52,0.2); }
+.toast-err { color: #B91C1C; background: #FEE2E2; border-color: rgba(185,28,28,0.2); }
+
+/* ---- Table ---- */
+.table-wrap { background: #FFFFFF; border: 1px solid var(--itq-hairline); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.col-headers { display: grid; grid-template-columns: 80px 1.8fr 1.2fr 70px 1.2fr 1.5fr 80px 46px; gap: 0; padding: 9px 16px; border-bottom: 2px solid var(--itq-hairline); background: var(--itq-mist); }
+.col-headers span { font-size: 10px; font-weight: 700; color: var(--itq-royal-blue); text-transform: uppercase; letter-spacing: 0.09em; }
+.vrow { display: grid; grid-template-columns: 80px 1.8fr 1.2fr 70px 1.2fr 1.5fr 80px 46px; gap: 8px; align-items: center; padding: 7px 16px; border-bottom: 1px solid var(--itq-hairline); transition: background var(--dur) var(--ease); }
 .vrow:last-child { border-bottom: none; }
-.vrow:hover { background: #21262d30; }
-.source-badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; text-align: center; white-space: nowrap; }
-.badge-vsphere { background: #1f4068; color: #79c0ff; border: 1px solid #58a6ff30; }
-.badge-nsx     { background: #2d1f68; color: #c9a7ff; border: 1px solid #a371f730; }
-.badge-manual  { background: #1f3820; color: #7ee787; border: 1px solid #3fb95030; }
-.empty-state { padding: 48px 20px; text-align: center; color: #8b949e; font-size: 14px; }
-input { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; padding: 6px 10px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; width: 100%; transition: border-color 0.15s; }
-input::placeholder { color: #484f58; }
-input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px #58a6ff18; }
-input.err { border-color: #f85149; box-shadow: 0 0 0 3px #f8514918; }
-input.ok  { border-color: #3fb950; }
-.del-btn { width: 34px; height: 34px; border-radius: 6px; border: 1px solid #30363d; background: transparent; color: #8b949e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; padding: 0; transition: all 0.1s; }
-.del-btn:hover { background: #f8514914; color: #f85149; border-color: #f8514940; }
-.footer-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid #21262d; background: #0d1117; }
-.vlan-count { font-size: 13px; color: #8b949e; }
-.toast { font-size: 12px; padding: 4px 12px; border-radius: 6px; border: 1px solid #30363d; }
-.toast-ok  { color: #3fb950; border-color: #3fb95040; }
-.toast-err { color: #f85149; border-color: #f8514940; }
-.output-section { margin-top: 24px; }
-.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.output-label { font-size: 13px; color: #8b949e; display: flex; align-items: center; gap: 8px; }
-.output-label::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; }
-.copy-btn { font-size: 12px; padding: 6px 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #8b949e; cursor: pointer; }
-.copy-btn:hover { background: #21262d; color: #e6edf3; }
-pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; color: #e6edf3; white-space: pre; overflow-x: auto; line-height: 1.8; }
-.kw { color: #ff7b72; }
-.st { color: #a5d6ff; }
-.modal-backdrop { position: fixed; inset: 0; background: #00000099; display: flex; align-items: center; justify-content: center; z-index: 100; }
-.modal { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; width: 480px; max-width: 90vw; }
-.modal h3 { font-size: 15px; font-weight: 500; color: #e6edf3; margin-bottom: 8px; }
-.modal p  { font-size: 13px; color: #8b949e; margin-bottom: 16px; line-height: 1.6; }
-.modal-list { max-height: 320px; overflow-y: auto; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 16px; }
-.modal-item { display: grid; grid-template-columns: 24px 1fr 80px 80px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid #21262d; cursor: pointer; transition: background 0.1s; }
+.vrow:hover { background: var(--itq-mist); }
+.empty-state { padding: 48px 20px; text-align: center; color: var(--itq-light-grey); font-size: 14px; }
+
+/* ---- Source badges ---- */
+.source-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-align: center; white-space: nowrap; letter-spacing: 0.04em; text-transform: uppercase; font-family: var(--font-sans); }
+.badge-vsphere { background: var(--itq-light-blue-soft); color: var(--itq-royal-blue); border: 1px solid rgba(4,5,89,0.15); }
+.badge-nsx     { background: #EDE8F5; color: #4A1D8C; border: 1px solid rgba(74,29,140,0.2); }
+.badge-manual  { background: rgba(255,79,65,0.08); color: var(--itq-orange); border: 1px solid rgba(255,79,65,0.25); }
+
+/* ---- Inputs ---- */
+input { font-family: var(--font-mono); font-size: 12px; padding: 6px 9px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: #FFFFFF; color: var(--itq-royal-blue); width: 100%; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+input::placeholder { color: var(--itq-light-grey); font-style: italic; }
+input:focus { outline: none; border-color: var(--itq-orange); box-shadow: var(--shadow-focus); }
+input.err { border-color: #DC2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
+input.ok  { border-color: #16A34A; }
+
+/* ---- Delete button ---- */
+.del-btn { width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: transparent; color: var(--itq-light-grey); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; padding: 0; transition: all var(--dur) var(--ease); }
+.del-btn:hover { background: rgba(185,28,28,0.08); color: #B91C1C; border-color: rgba(185,28,28,0.3); }
+
+/* ---- Table footer ---- */
+.footer-bar { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-top: 1px solid var(--itq-hairline); background: var(--itq-mist); }
+.vlan-count { font-size: 12px; font-weight: 600; color: var(--itq-dark-grey); }
+
+/* ---- Output section ---- */
+.output-section { margin-top: 20px; }
+.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.output-label { font-size: 13px; font-weight: 600; color: var(--itq-royal-blue); display: flex; align-items: center; gap: 8px; }
+.output-label::before { content:''; display:inline-block; width:8px; height:8px; background: var(--itq-orange); flex-shrink: 0; }
+.output-actions { display: flex; gap: 8px; }
+.copy-btn { font-family: var(--font-sans); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: #FFFFFF; color: var(--itq-dark-grey); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
+.copy-btn:hover { background: var(--state-tint-hover); color: var(--itq-royal-blue); border-color: var(--itq-royal-40); }
+
+/* ---- Code block ---- */
+pre { background: var(--itq-mist); border: 1px solid var(--itq-hairline); border-left: 4px solid var(--itq-orange); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 20px 24px; font-family: var(--font-mono); font-size: 13px; color: var(--itq-royal-blue); white-space: pre; overflow-x: auto; line-height: 1.8; }
+.kw { color: var(--itq-orange); font-weight: 700; }
+.st { color: var(--itq-royal-blue); }
+
+/* ---- Modal ---- */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(4,5,90,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: #FFFFFF; border: 1px solid var(--itq-hairline); border-radius: var(--radius-lg); padding: 28px; width: 500px; max-width: 92vw; box-shadow: var(--shadow-md); }
+.modal h3 { font-size: 16px; font-weight: 700; color: var(--itq-royal-blue); margin-bottom: 8px; }
+.modal p { font-size: 13px; color: var(--itq-dark-grey); margin-bottom: 16px; line-height: 1.6; }
+.modal-list { max-height: 320px; overflow-y: auto; border: 1px solid var(--itq-hairline); border-radius: var(--radius-md); margin-bottom: 16px; }
+.modal-item { display: grid; grid-template-columns: 24px 1fr 80px 80px; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--itq-hairline); cursor: pointer; transition: background var(--dur) var(--ease); }
 .modal-item:last-child { border-bottom: none; }
-.modal-item:hover { background: #21262d; }
-.modal-item.selected { background: #1f6feb20; }
-.modal-item input[type=checkbox] { accent-color: #58a6ff; width: 14px; height: 14px; cursor: pointer; }
-.modal-name { font-size: 13px; color: #e6edf3; font-family: 'SFMono-Regular', Consolas, monospace; }
-.modal-vlan { font-size: 12px; color: #8b949e; }
+.modal-item:hover { background: var(--itq-mist); }
+.modal-item.selected { background: rgba(255,79,65,0.06); }
+.modal-item input[type=checkbox] { accent-color: var(--itq-orange); width: 14px; height: 14px; cursor: pointer; }
+.modal-name { font-family: var(--font-mono); font-size: 13px; color: var(--itq-royal-blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-vlan { font-size: 12px; color: var(--itq-dark-grey); }
 .modal-source { font-size: 10px; }
 .modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
-.modal-footer .btn { padding: 7px 16px; font-size: 13px; }
-.sel-all { font-size: 12px; color: #58a6ff; cursor: pointer; margin-bottom: 8px; display: inline-block; }
+.modal-footer .btn { padding: 8px 18px; }
+.sel-all { font-size: 12px; font-weight: 600; color: var(--itq-orange); cursor: pointer; margin-bottom: 8px; display: inline-block; }
 .sel-all:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="index.html" class="site-logo"><img src="assets/logo/itq-logo-primary.png" alt="ITQ"></a>
+    <span class="site-divider"></span>
+    <span class="site-project">vSphere VLAN Tester</span>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="vlan-config-builder.html" class="active">VLAN Builder</a>
+      <a href="wsl-config-builder.html">WSL Builder</a>
+      <a href="https://github.com/pauldiee/vsphere-vlan-tester" target="_blank" rel="noopener" class="btn-gh"><i class="fa-brands fa-github"></i></a>
+    </nav>
+  </div>
+</header>
+
+<div class="disclaimer-banner"><strong>Unofficial project</strong> by Paul van Dieen. Not affiliated with, authorized, or endorsed by ITQ or VMware.</div>
+
+<div class="page-main">
+
 <div class="app-header">
+  <div class="app-eyebrow">vSphere Tool</div>
   <div class="app-title">VLAN Config Builder</div>
-  <div class="app-sub">Generate the VLANS=() block for vlan-test.sh &nbsp;·&nbsp; <a href="https://www.hollebollevsan.nl" target="_blank">www.hollebollevsan.nl</a></div>
+  <div class="app-sub">Generate the VLANS=() block for vlan-test.sh &nbsp;&middot;&nbsp; <a href="https://www.hollebollevsan.nl" target="_blank">www.hollebollevsan.nl</a></div>
 </div>
 
 <div class="toolbar">
-  <button class="btn btn-import" onclick="triggerImport()">&#8595; Load from vCenter / NSX</button>
+  <button class="btn btn-import" onclick="triggerImport()"><i class="fa-solid fa-download"></i> Load from vCenter / NSX</button>
   <input type="file" id="json-file" accept=".json" style="display:none" onchange="loadJSON(this)">
-  <button class="btn btn-import" onclick="document.getElementById('txt-file').click()">&#8595; Import saved config</button>
+  <button class="btn btn-import" onclick="document.getElementById('txt-file').click()"><i class="fa-solid fa-file-import"></i> Import saved config</button>
   <input type="file" id="txt-file" accept=".txt" style="display:none" onchange="loadTxt(this)">
   <div class="toolbar-sep"></div>
-  <button class="btn btn-primary" onclick="addRow()">+ Add VLAN</button>
-  <button class="btn" onclick="generate()">Generate config ↗</button>
-  <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
+  <button class="btn btn-primary" onclick="addRow()"><i class="fa-solid fa-plus"></i> Add VLAN</button>
+  <button class="btn" onclick="generate()">Generate config <i class="fa-solid fa-arrow-up-right-from-square"></i></button>
+  <button class="btn btn-danger" onclick="clearAll()"><i class="fa-solid fa-trash-can"></i> Clear all</button>
   <span id="toast" style="display:none"></span>
 </div>
 
@@ -140,11 +246,15 @@ pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; paddi
 <div class="output-section" id="output-section" style="display:none">
   <div class="output-header">
     <div class="output-label">Config block ready — paste into vlan-test.sh</div>
-    <button class="copy-btn" id="copy-btn" onclick="copyConfig()">Copy to clipboard</button>
-      <button class="copy-btn" onclick="exportConfig()" style="margin-left:8px;">Export to file</button>
+    <div class="output-actions">
+      <button class="copy-btn" id="copy-btn" onclick="copyConfig()"><i class="fa-solid fa-copy"></i> Copy to clipboard</button>
+      <button class="copy-btn" onclick="exportConfig()"><i class="fa-solid fa-file-export"></i> Export to file</button>
+    </div>
   </div>
   <pre id="output"></pre>
 </div>
+
+</div><!-- /.page-main -->
 
 <div class="modal-backdrop" id="modal" style="display:none">
   <div class="modal">
@@ -200,8 +310,8 @@ function render() {
       <input id="prefix-${r.id}" value="${esc(r.prefix)}" placeholder="24"             oninput="sync(${r.id},'prefix',this.value);validateInput(this,isValidPrefix)" style="text-align:center">
       <input id="gw-${r.id}"     value="${esc(r.gw)}"     placeholder="192.168.10.1"   oninput="sync(${r.id},'gw',this.value);validateInput(this,isValidIP)">
       <input id="desc-${r.id}"   value="${esc(r.desc)}"   placeholder="Description"    oninput="sync(${r.id},'desc',this.value)">
-      <div style="font-size:11px;color:#8b949e;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.vlanId||'')}</div>
-      <button class="del-btn" onclick="removeRow(${r.id})">×</button>`;
+      <div style="font-size:11px;color:var(--itq-light-grey);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.vlanId||'')}</div>
+      <button class="del-btn" onclick="removeRow(${r.id})" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
     c.appendChild(d);
   });
   document.getElementById('count').textContent = `${rows.length} VLAN${rows.length !== 1 ? 's' : ''}`;
@@ -294,7 +404,7 @@ function generate() {
 
 function copyConfig() {
   const lines = rows.map(r => { const pg=getVal(r.id,'pg')||r.pg||'PG-NAME', ip=getVal(r.id,'ip')||r.ip||'0.0.0.0', pref=getVal(r.id,'prefix')||r.prefix||'24', gw=getVal(r.id,'gw')||r.gw||'0.0.0.1', desc=getVal(r.id,'desc')||r.desc||'VLAN'; return `  "${pg}|${ip}/${pref}|${gw}|${desc}"`; });
-  navigator.clipboard.writeText(`VLANS=(\n${lines.join('\n')}\n)`).then(() => { const btn = document.getElementById('copy-btn'); btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = 'Copy to clipboard', 2000); });
+  navigator.clipboard.writeText(`VLANS=(\n${lines.join('\n')}\n)`).then(() => { const btn = document.getElementById('copy-btn'); btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!'; setTimeout(() => btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy to clipboard', 2000); });
 }
 
 function exportConfig() {

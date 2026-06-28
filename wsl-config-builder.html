@@ -23,74 +23,179 @@
     v1.2  2026-03-16  Added import saved config (.txt) button
     v1.3  2026-03-16  Added Load from vCenter VMs (vmdata.json) with
                       selection modal
+    v1.4  2026-06-28  Restyled to ITQ Design System (Brand Identity Book 2026)
   ============================================================
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WSL Network Test — Config Builder</title>
+<title>WSL Config Builder — ITQ</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0d1117; min-height: 100vh; padding: 28px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #c9d1d9; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Regular.otf") format("opentype"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-RegularItalic.otf") format("opentype"); font-weight:400; font-style:italic; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Semibold.otf") format("opentype"); font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-SemiboldItalic.otf") format("opentype"); font-weight:600; font-style:italic; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-Bold.otf") format("opentype"); font-weight:700; font-style:normal; font-display:swap; }
+@font-face { font-family:"Titillium"; src:url("assets/fonts/Titillium-BoldItalic.otf") format("opentype"); font-weight:700; font-style:italic; font-display:swap; }
+@font-face { font-family:"JetBrains Mono"; src:url("assets/fonts/JetBrainsMono-VariableFont_wght.ttf") format("truetype"); font-weight:100 800; font-style:normal; font-display:swap; }
+@font-face { font-family:"JetBrains Mono"; src:url("assets/fonts/JetBrainsMono-Italic-VariableFont_wght.ttf") format("truetype"); font-weight:100 800; font-style:italic; font-display:swap; }
+
+:root {
+  --itq-royal-blue: #040559;
+  --itq-orange: #FF4F41;
+  --itq-light-blue: #CDE3F7;
+  --itq-white: #FFFFFF;
+  --itq-mist: #F4F8FD;
+  --itq-hairline: #E2E8F0;
+  --itq-dark-grey: #535353;
+  --itq-light-grey: #A8A8A8;
+  --itq-royal-40: #9B9BBF;
+  --itq-light-blue-soft: #E6F1FB;
+  --state-orange-hover: #E63E31;
+  --state-tint-hover: rgba(4,5,90,0.06);
+  --font-sans: "Titillium", Calibri, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  --shadow-sm: 0 2px 6px rgba(4,5,90,0.08);
+  --shadow-md: 0 8px 24px rgba(4,5,90,0.10);
+  --shadow-focus: 0 0 0 3px rgba(255,79,65,0.30);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --dur: 120ms;
+  --ease: cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: var(--font-sans); font-size: 15px; line-height: 1.55; color: var(--itq-royal-blue); background: #FFFFFF; -webkit-font-smoothing: antialiased; }
+img { max-width: 100%; display: block; }
+::selection { background: var(--itq-orange); color: #FFFFFF; }
+
+/* ---- Site header ---- */
+.site-header { background: #FFFFFF; border-bottom: 1px solid var(--itq-hairline); position: sticky; top: 0; z-index: 50; }
+.site-header::before { content:''; display:block; height:3px; background: var(--itq-orange); }
+.site-header-inner { max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 58px; display: flex; align-items: center; gap: 14px; }
+.site-logo img { height: 32px; width: auto; }
+.site-divider { width: 1px; height: 22px; background: var(--itq-hairline); flex-shrink: 0; }
+.site-project { font-weight: 600; font-size: 13px; color: var(--itq-royal-blue); white-space: nowrap; }
+.site-nav { margin-left: auto; display: flex; gap: 2px; align-items: center; }
+.site-nav a { font-size: 13px; font-weight: 600; color: var(--itq-dark-grey); text-decoration: none; padding: 5px 12px; border-radius: var(--radius-sm); transition: all var(--dur) var(--ease); white-space: nowrap; }
+.site-nav a:hover { color: var(--itq-royal-blue); background: var(--state-tint-hover); }
+.site-nav a.active { color: var(--itq-orange); background: rgba(255,79,65,0.08); }
+.site-nav a.btn-gh { color: var(--itq-dark-grey); }
+
+/* ---- Disclaimer banner ---- */
+.disclaimer-banner { background: var(--itq-mist); border-bottom: 1px solid var(--itq-hairline); padding: 6px 32px; text-align: center; font-size: 12px; color: var(--itq-dark-grey); }
+.disclaimer-banner strong { font-weight: 600; color: var(--itq-royal-blue); }
+
+/* ---- Page main ---- */
+.page-main { max-width: 1280px; margin: 0 auto; padding: 28px 32px 56px; }
+
+/* ---- App header ---- */
 .app-header { margin-bottom: 20px; }
-.app-title { font-size: 18px; font-weight: 500; color: #e6edf3; }
-.app-sub { font-size: 13px; color: #8b949e; margin-top: 4px; }
-.app-sub a { color: #58a6ff; text-decoration: none; }
-.toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-.toolbar-sep { width: 1px; height: 28px; background: #30363d; margin: 0 2px; }
-.btn { cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #c9d1d9; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-.btn:hover { background: #21262d; border-color: #8b949e; }
-.btn-primary { background: #238636; border-color: #2ea043; color: #fff; }
-.btn-primary:hover { background: #2ea043; }
-.btn-danger { color: #f85149; border-color: #f8514940; }
-.btn-import { border-color: #58a6ff40; color: #58a6ff; }
-.btn-import:hover { background: #58a6ff14; border-color: #58a6ff; }
-.btn-danger:hover { background: #f8514914; }
-.table-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 10px; overflow: hidden; }
-.col-headers { display: grid; grid-template-columns: 1.6fr 1.1fr 1.1fr 1.4fr 80px 40px; gap: 0; padding: 9px 16px; border-bottom: 1px solid #30363d; background: #0d1117; }
-.col-headers span { font-size: 11px; font-weight: 500; color: #8b949e; text-transform: uppercase; letter-spacing: 0.06em; }
-.vrow { display: grid; grid-template-columns: 1.6fr 1.1fr 1.1fr 1.4fr 80px 40px; gap: 8px; align-items: center; padding: 7px 16px; border-bottom: 1px solid #21262d; transition: background 0.1s; }
+.app-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--itq-orange); margin-bottom: 4px; }
+.app-title { font-size: 20px; font-weight: 700; color: var(--itq-royal-blue); }
+.app-sub { font-size: 13px; color: var(--itq-dark-grey); margin-top: 3px; }
+.app-sub a { color: var(--itq-orange); text-decoration: none; font-weight: 600; }
+.app-sub a:hover { color: var(--state-orange-hover); }
+
+/* ---- Toolbar ---- */
+.toolbar { display: flex; gap: 7px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.toolbar-sep { width: 1px; height: 26px; background: var(--itq-hairline); margin: 0 3px; flex-shrink: 0; }
+
+/* ---- Buttons ---- */
+.btn { cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 600; padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: #FFFFFF; color: var(--itq-royal-blue); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; transition: all var(--dur) var(--ease); line-height: 1.2; }
+.btn:hover { background: var(--state-tint-hover); border-color: var(--itq-royal-40); }
+.btn-primary { background: var(--itq-orange); border-color: var(--itq-orange); color: #FFFFFF; }
+.btn-primary:hover { background: var(--state-orange-hover); border-color: var(--state-orange-hover); }
+.btn-import { color: var(--itq-orange); border-color: rgba(255,79,65,0.35); background: rgba(255,79,65,0.04); }
+.btn-import:hover { background: rgba(255,79,65,0.10); border-color: var(--itq-orange); }
+.btn-danger { color: #B91C1C; border-color: rgba(185,28,28,0.3); background: transparent; }
+.btn-danger:hover { background: rgba(185,28,28,0.06); border-color: rgba(185,28,28,0.5); }
+
+/* Toast */
+.toast { font-family: var(--font-sans); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid transparent; }
+.toast-ok  { color: #166534; background: #DCFCE7; border-color: rgba(22,101,52,0.2); }
+.toast-err { color: #B91C1C; background: #FEE2E2; border-color: rgba(185,28,28,0.2); }
+
+/* ---- Table ---- */
+.table-wrap { background: #FFFFFF; border: 1px solid var(--itq-hairline); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.col-headers { display: grid; grid-template-columns: 1.6fr 1.1fr 1.1fr 1.4fr 80px 38px; gap: 0; padding: 9px 16px; border-bottom: 2px solid var(--itq-hairline); background: var(--itq-mist); }
+.col-headers span { font-size: 10px; font-weight: 700; color: var(--itq-royal-blue); text-transform: uppercase; letter-spacing: 0.09em; }
+.vrow { display: grid; grid-template-columns: 1.6fr 1.1fr 1.1fr 1.4fr 80px 38px; gap: 8px; align-items: center; padding: 7px 16px; border-bottom: 1px solid var(--itq-hairline); transition: background var(--dur) var(--ease); }
 .vrow:last-child { border-bottom: none; }
-.vrow:hover { background: #21262d30; }
-.empty-state { padding: 40px 20px; text-align: center; color: #8b949e; font-size: 13px; }
-input { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; padding: 5px 9px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; width: 100%; transition: border-color 0.15s; }
-input::placeholder { color: #484f58; }
-input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px #58a6ff18; }
-input.err { border-color: #f85149; }
-input.ok  { border-color: #3fb950; }
-.del-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #30363d; background: transparent; color: #8b949e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; padding: 0; transition: all 0.1s; }
-.del-btn:hover { background: #f8514914; color: #f85149; border-color: #f8514940; }
-.footer-bar { display: flex; align-items: center; padding: 9px 16px; border-top: 1px solid #21262d; background: #0d1117; }
-.vlan-count { font-size: 12px; color: #8b949e; }
+.vrow:hover { background: var(--itq-mist); }
+.empty-state { padding: 40px 20px; text-align: center; color: var(--itq-light-grey); font-size: 14px; }
+
+/* ---- Inputs ---- */
+input { font-family: var(--font-mono); font-size: 12px; padding: 6px 9px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: #FFFFFF; color: var(--itq-royal-blue); width: 100%; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+input::placeholder { color: var(--itq-light-grey); font-style: italic; }
+input:focus { outline: none; border-color: var(--itq-orange); box-shadow: var(--shadow-focus); }
+input.err { border-color: #DC2626; }
+input.ok  { border-color: #16A34A; }
+
+/* ---- Delete button ---- */
+.del-btn { width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: transparent; color: var(--itq-light-grey); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; padding: 0; transition: all var(--dur) var(--ease); }
+.del-btn:hover { background: rgba(185,28,28,0.08); color: #B91C1C; border-color: rgba(185,28,28,0.3); }
+
+/* ---- Table footer ---- */
+.footer-bar { display: flex; align-items: center; padding: 9px 16px; border-top: 1px solid var(--itq-hairline); background: var(--itq-mist); }
+.vlan-count { font-size: 12px; font-weight: 600; color: var(--itq-dark-grey); }
+
+/* ---- Output section ---- */
 .output-section { margin-top: 20px; }
-.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.output-label { font-size: 13px; color: #8b949e; display: flex; align-items: center; gap: 8px; }
-.output-label::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; }
-.copy-btn { font-size: 12px; padding: 5px 14px; border-radius: 6px; border: 1px solid #30363d; background: #161b22; color: #8b949e; cursor: pointer; }
-.copy-btn:hover { background: #21262d; color: #e6edf3; }
-pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 18px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; color: #e6edf3; white-space: pre; overflow-x: auto; line-height: 1.8; }
-.kw { color: #ff7b72; }
-.st { color: #a5d6ff; }
-.cm { color: #8b949e; }
+.output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.output-label { font-size: 13px; font-weight: 600; color: var(--itq-royal-blue); display: flex; align-items: center; gap: 8px; }
+.output-label::before { content:''; display:inline-block; width:8px; height:8px; background: var(--itq-orange); flex-shrink: 0; }
+.output-actions { display: flex; gap: 8px; }
+.copy-btn { font-family: var(--font-sans); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--itq-hairline); background: #FFFFFF; color: var(--itq-dark-grey); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all var(--dur) var(--ease); }
+.copy-btn:hover { background: var(--state-tint-hover); color: var(--itq-royal-blue); border-color: var(--itq-royal-40); }
+
+/* ---- Code block ---- */
+pre { background: var(--itq-mist); border: 1px solid var(--itq-hairline); border-left: 4px solid var(--itq-orange); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: 20px 24px; font-family: var(--font-mono); font-size: 13px; color: var(--itq-royal-blue); white-space: pre; overflow-x: auto; line-height: 1.8; }
+.kw { color: var(--itq-orange); font-weight: 700; }
+.st { color: var(--itq-royal-blue); }
+.cm { color: var(--itq-light-grey); font-style: italic; }
 </style>
 </head>
 <body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="index.html" class="site-logo"><img src="assets/logo/itq-logo-primary.png" alt="ITQ"></a>
+    <span class="site-divider"></span>
+    <span class="site-project">vSphere VLAN Tester</span>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="vlan-config-builder.html">VLAN Builder</a>
+      <a href="wsl-config-builder.html" class="active">WSL Builder</a>
+      <a href="https://github.com/pauldiee/vsphere-vlan-tester" target="_blank" rel="noopener" class="btn-gh"><i class="fa-brands fa-github"></i></a>
+    </nav>
+  </div>
+</header>
+
+<div class="disclaimer-banner"><strong>Unofficial project</strong> by Paul van Dieen. Not affiliated with, authorized, or endorsed by ITQ or VMware.</div>
+
+<div class="page-main">
+
 <div class="app-header">
+  <div class="app-eyebrow">Connectivity Tool</div>
   <div class="app-title">WSL Network Test — Config Builder</div>
-  <div class="app-sub">Generate the TARGETS=() block for wsl-network-test.sh &nbsp;·&nbsp; <a href="https://www.hollebollevsan.nl" target="_blank">www.hollebollevsan.nl</a></div>
+  <div class="app-sub">Generate the TARGETS=() block for wsl-network-test.sh &nbsp;&middot;&nbsp; <a href="https://www.hollebollevsan.nl" target="_blank">www.hollebollevsan.nl</a></div>
 </div>
 
 <div class="toolbar">
-  <button class="btn btn-primary" onclick="addRow()">+ Add target</button>
-  <button class="btn" onclick="generate()">Generate config &#8599;</button>
+  <button class="btn btn-primary" onclick="addRow()"><i class="fa-solid fa-plus"></i> Add target</button>
+  <button class="btn" onclick="generate()">Generate config <i class="fa-solid fa-arrow-up-right-from-square"></i></button>
   <div class="toolbar-sep"></div>
-  <button class="btn btn-import" onclick="document.getElementById('vm-file').click()">&#8595; Load from vCenter VMs</button>
+  <button class="btn btn-import" onclick="document.getElementById('vm-file').click()"><i class="fa-solid fa-download"></i> Load from vCenter VMs</button>
   <input type="file" id="vm-file" accept=".json" style="display:none" onchange="loadVMJson(this)">
-  <button class="btn btn-import" onclick="document.getElementById('txt-file').click()">&#8595; Import saved config</button>
+  <button class="btn btn-import" onclick="document.getElementById('txt-file').click()"><i class="fa-solid fa-file-import"></i> Import saved config</button>
   <input type="file" id="txt-file" accept=".txt" style="display:none" onchange="loadTxt(this)">
   <div class="toolbar-sep"></div>
-  <button class="btn btn-danger" onclick="clearAll()">Clear all</button>
+  <button class="btn btn-danger" onclick="clearAll()"><i class="fa-solid fa-trash-can"></i> Clear all</button>
   <span id="toast" style="display:none"></span>
 </div>
 
@@ -112,11 +217,15 @@ pre { background: #161b22; border: 1px solid #30363d; border-radius: 10px; paddi
 <div class="output-section" id="output-section" style="display:none">
   <div class="output-header">
     <div class="output-label">Config block ready — paste into wsl-network-test.sh</div>
-    <button class="copy-btn" id="copy-btn" onclick="copyConfig()">Copy to clipboard</button>
-      <button class="copy-btn" onclick="exportConfig()" style="margin-left:8px;">Export to file</button>
+    <div class="output-actions">
+      <button class="copy-btn" id="copy-btn" onclick="copyConfig()"><i class="fa-solid fa-copy"></i> Copy to clipboard</button>
+      <button class="copy-btn" onclick="exportConfig()"><i class="fa-solid fa-file-export"></i> Export to file</button>
+    </div>
   </div>
   <pre id="output"></pre>
 </div>
+
+</div><!-- /.page-main -->
 
 <script>
 let rows = [], uid = 0;
@@ -154,7 +263,7 @@ function render() {
       <input id="gw-${r.id}"    value="${esc(r.gw)}"    placeholder="192.168.10.1"                    oninput="sync(${r.id},'gw',this.value);validateIP(this)">
       <input id="url-${r.id}"   value="${esc(r.url)}"   placeholder="http:// or https:// or leave empty" oninput="sync(${r.id},'url',this.value)">
       <input id="code-${r.id}"  value="${esc(r.code)}"  placeholder="200" style="text-align:center"   oninput="sync(${r.id},'code',this.value)">
-      <button class="del-btn" onclick="removeRow(${r.id})">x</button>`;
+      <button class="del-btn" onclick="removeRow(${r.id})" title="Remove"><i class="fa-solid fa-xmark"></i></button>`;
     c.appendChild(d);
   });
   document.getElementById('count').textContent = `${rows.length} target${rows.length !== 1 ? 's' : ''}`;
@@ -188,8 +297,8 @@ function copyConfig() {
   });
   navigator.clipboard.writeText(`TARGETS=(\n${lines.join('\n')}\n)`).then(() => {
     const btn = document.getElementById('copy-btn');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy to clipboard', 2000);
   });
 }
 
@@ -219,7 +328,6 @@ function loadVMJson(input) {
       const data = JSON.parse(e.target.result);
       const arr = Array.isArray(data) ? data : [data];
       if (!arr.length) { showVMToast('No VM entries found', false); return; }
-      // Show selection modal
       openVMModal(arr, file.name);
     } catch { showVMToast('Invalid JSON file', false); }
     input.value = '';
@@ -228,33 +336,32 @@ function loadVMJson(input) {
 }
 
 function openVMModal(vms, filename) {
-  // Build modal inline since wsl builder has no modal yet
   const existing = document.getElementById('vm-modal');
   if (existing) existing.remove();
 
   const backdrop = document.createElement('div');
   backdrop.id = 'vm-modal';
-  backdrop.style.cssText = 'position:fixed;inset:0;background:#00000099;display:flex;align-items:center;justify-content:center;z-index:100;';
+  backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(4,5,90,0.45);display:flex;align-items:center;justify-content:center;z-index:100;';
 
   const modal = document.createElement('div');
-  modal.style.cssText = 'background:#161b22;border:1px solid #30363d;border-radius:12px;padding:24px;width:520px;max-width:90vw;';
+  modal.style.cssText = 'background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:28px;width:520px;max-width:90vw;box-shadow:0 8px 24px rgba(4,5,90,0.10);font-family:"Titillium",Calibri,system-ui,sans-serif;';
 
   const vmRows = vms.map((vm, i) => `
-    <div class="vm-item" data-idx="${i}" style="display:grid;grid-template-columns:24px 1fr 120px 120px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid #21262d;cursor:pointer;" onclick="this.querySelector('input').checked=!this.querySelector('input').checked;this.style.background=this.querySelector('input').checked?'#1f6feb20':'transparent'">
-      <input type="checkbox" style="accent-color:#58a6ff;width:14px;height:14px;" onclick="event.stopPropagation();this.closest('.vm-item').style.background=this.checked?'#1f6feb20':'transparent'">
-      <span style="font-size:13px;color:#e6edf3;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${vm.label||vm.name||''}</span>
-      <span style="font-size:12px;color:#8b949e;">${vm.ip||''}</span>
-      <span style="font-size:12px;color:#8b949e;">${vm.gateway||'no gw'}</span>
+    <div class="vm-item" data-idx="${i}" style="display:grid;grid-template-columns:24px 1fr 120px 120px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid #E2E8F0;cursor:pointer;transition:background 120ms;" onclick="this.querySelector('input').checked=!this.querySelector('input').checked;this.style.background=this.querySelector('input').checked?'rgba(255,79,65,0.06)':'transparent'">
+      <input type="checkbox" style="accent-color:#FF4F41;width:14px;height:14px;" onclick="event.stopPropagation();this.closest('.vm-item').style.background=this.checked?'rgba(255,79,65,0.06)':'transparent'">
+      <span style="font-size:13px;color:#040559;font-family:'JetBrains Mono',Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${vm.label||vm.name||''}</span>
+      <span style="font-size:12px;color:#535353;">${vm.ip||''}</span>
+      <span style="font-size:12px;color:#535353;">${vm.gateway||'no gw'}</span>
     </div>`).join('');
 
   modal.innerHTML = `
-    <h3 style="font-size:15px;font-weight:500;color:#e6edf3;margin-bottom:8px;">Select VMs to import</h3>
-    <p style="font-size:13px;color:#8b949e;margin-bottom:12px;">From <strong style="color:#c9d1d9">${filename}</strong> — ${vms.length} powered-on VMs with IPs</p>
-    <span onclick="document.querySelectorAll('#vm-modal .vm-item input').forEach(cb=>{cb.checked=!cb.checked;cb.closest('.vm-item').style.background=cb.checked?'#1f6feb20':'transparent'})" style="font-size:12px;color:#58a6ff;cursor:pointer;margin-bottom:8px;display:inline-block;">Select all</span>
-    <div style="max-height:320px;overflow-y:auto;border:1px solid #30363d;border-radius:8px;margin-bottom:16px;">${vmRows}</div>
+    <h3 style="font-size:16px;font-weight:700;color:#040559;margin-bottom:8px;">Select VMs to import</h3>
+    <p style="font-size:13px;color:#535353;margin-bottom:12px;">From <strong style="color:#040559;font-weight:600;">${filename}</strong> — ${vms.length} powered-on VMs with IPs</p>
+    <span onclick="document.querySelectorAll('#vm-modal .vm-item input').forEach(cb=>{cb.checked=!cb.checked;cb.closest('.vm-item').style.background=cb.checked?'rgba(255,79,65,0.06)':'transparent'})" style="font-size:12px;font-weight:600;color:#FF4F41;cursor:pointer;margin-bottom:8px;display:inline-block;">Select all</span>
+    <div style="max-height:320px;overflow-y:auto;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:16px;">${vmRows}</div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button onclick="document.getElementById('vm-modal').remove()" style="cursor:pointer;font-size:13px;padding:7px 16px;border-radius:6px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;">Cancel</button>
-      <button id="vm-import-btn" onclick="importVMs(${JSON.stringify(vms).replace(/"/g,'&quot;')})" style="cursor:pointer;font-size:13px;font-weight:500;padding:7px 16px;border-radius:6px;border:1px solid #2ea043;background:#238636;color:#fff;">Import selected</button>
+      <button onclick="document.getElementById('vm-modal').remove()" style="cursor:pointer;font-family:'Titillium',Calibri,system-ui,sans-serif;font-size:13px;font-weight:600;padding:7px 16px;border-radius:6px;border:1px solid #E2E8F0;background:#FFFFFF;color:#040559;">Cancel</button>
+      <button id="vm-import-btn" onclick="importVMs(${JSON.stringify(vms).replace(/"/g,'&quot;')})" style="cursor:pointer;font-family:'Titillium',Calibri,system-ui,sans-serif;font-size:13px;font-weight:600;padding:7px 16px;border-radius:6px;border:1px solid #FF4F41;background:#FF4F41;color:#FFFFFF;">Import selected</button>
     </div>`;
 
   backdrop.appendChild(modal);
