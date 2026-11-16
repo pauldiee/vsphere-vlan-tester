@@ -262,7 +262,7 @@ All three test scripts produce the same dark-themed interactive HTML report:
 - No extra modules required
 
 ### Get-PortGroupData.ps1 / Get-VMData.ps1
-- VMware.PowerCLI module
+- VMware.PowerCLI (vCenter 7 / 8) or VCF.PowerCLI on PowerShell 7 (vCenter 9, [KB 428547](https://knowledge.broadcom.com/external/article/428547)); setup: [Jump Host: PowerShell 7 and VCF PowerCLI](https://vcf-planning.hollebollevsan.nl/docs/42-jump-host-powershell/)
 - VMware Tools running on target VMs (for `Get-VMData.ps1` only)
 
 ---
